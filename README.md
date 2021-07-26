@@ -1,12 +1,12 @@
-# Rainflower
+# Rainbase
 
-Rainflower is a digital workspace for independent music labels and teams. 
+Rainbase is a digital workspace for independent music labels and teams. 
 
 ### Prerequisites
 - Download git(https://git-scm.com/downloads)
 - Download VSCode(https://code.visualstudio.com/download)
 - Download npm and node.js software(https://www.npmjs.com/get-npm)  
-- Create a new folder for Thndr on your desktop.
+- Create a new folder for Rainbase on your desktop.
 
 ## Getting Started
 Clone the branch  and run npm install in the backend and frontend folders respectively 
