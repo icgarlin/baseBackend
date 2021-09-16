@@ -1,7 +1,7 @@
-import { GenericError, PageInfo } from '../__shared__/schema';
+import { GenericError, PageInfo } from '../../__shared__/schema';
 import { Field, InputType, ObjectType, Int, ID, Root } from 'type-graphql';
-import { FileUrlOrErrorUnion } from '../__shared__/types.resolver';
-import { ICloudServiceRepo } from '../__shared__/interfaces';
+import { FileUrlOrErrorUnion } from '../../__shared__/types.resolver';
+import { ICloudServiceRepo } from '../../__shared__/interfaces';
 
 
 
@@ -27,9 +27,9 @@ export class TFile {
     isPersonal: boolean;
     @Field(() => Boolean, {nullable: false})
     deleted: boolean;
-    @Field(() => Date, {nullable: false})
+    @Field({nullable: false})
     updatedAt: Date; 
-    @Field(() => Date, {nullable: false})
+    @Field({nullable: false})
     createdAt: Date;
     @Field(() => FileUrlOrErrorUnion, {nullable: false})
     fileUrl(
@@ -38,13 +38,12 @@ export class TFile {
         try {
             const { key } = file; 
             if (this.cloudService !== undefined) {
-              const url = this.cloudService.getUrl(key);
+              const url = this.cloudService.getUrl(key); 
               return {url}
             } else {
                 return { url: ''}
             }
         } catch (error) {
-            console.log('our error ', error); 
             return error as GenericError; 
         }
     } 
@@ -79,15 +78,15 @@ export class PreSignedInfo {
 
 @InputType()
 export class FileInput {
-  @Field(() => String)
-  ownerId?: string; 
-  @Field(() => Boolean)
-  deleted?: boolean; 
+  @Field(() => String, {nullable: false})
+  ownerId: string; 
+  @Field(() => Boolean, {nullable: false})
+  deleted: boolean; 
   @Field(() => Boolean, {nullable: false})
   isPersonal: boolean;
   @Field(() => String, {nullable: false})
   key: string; 
-  @Field(() => String, {nullable: false})
+  @Field(() => String)
   parentId: string;
   @Field(() => String, {nullable: false})
   name: string;

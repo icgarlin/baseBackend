@@ -1,6 +1,6 @@
-import mongoose, { Document, Model } from 'mongoose';
-import { Folder } from './folder.schema';
-import { FileConnectionOrErrorUnion } from './types.resolver';
+import mongoose, { Document, 
+                   Model } from 'mongoose';
+
 
 
 export interface IFolderModel extends Document {
@@ -8,13 +8,20 @@ export interface IFolderModel extends Document {
     name: string; 
     deleted: boolean; 
     starred: boolean; 
-    childrenIds: string[]; 
-    parentId: string; 
+    parentId: string | null; 
     ownerId: string; 
+    type: FolderType; 
     isPersonal: boolean;
     createdAt: Date; 
     updatedAt: Date;
-    getChildren: (folder: Folder) => Promise<typeof FileConnectionOrErrorUnion>;  
+    position:  number; 
+    fileOriginId?: string; 
+}
+
+export enum FolderType { 
+  DRAFTS = 'DRAFTS',
+  FOLDER = 'FOLDER', 
+  PROJECT = 'PROJECT'
 }
 
 const folderSchema = new mongoose.Schema({
@@ -22,17 +29,18 @@ const folderSchema = new mongoose.Schema({
     type: String,
     required: [true, 'The filename is required'],
   },
-  childrenIds: [
-    { type: mongoose.Schema.Types.ObjectId },
-  ],
   parentId: {
     type: String,
-    required: false,
+    required: true,
   },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'the ownerId is required'], 
+    required: [true, 'Owner id is required'], 
+  },
+  type: {
+    type: FolderType,
+    required: true
   },
   starred: {
     type: Boolean,
@@ -45,6 +53,11 @@ const folderSchema = new mongoose.Schema({
   isPersonal: {
     type: Boolean,
     required: true
+  },
+  fileId: {
+    type :mongoose.Schema.Types.ObjectId,
+    ref: 'File', 
+    required: false
   }
 }, {timestamps: true});
 

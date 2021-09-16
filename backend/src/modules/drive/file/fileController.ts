@@ -1,18 +1,24 @@
 import { ObjectID } from 'mongodb';
-import BaseRepo from '../__shared__/baseRepo';
-import { BasicError, ISuccess } from '../__shared__/error';
-import { ICloudServiceRepo, IFileRepo } from '../__shared__/interfaces';
+import BaseRepo from '../../__shared__/baseRepo';
+import { BasicError, 
+         ISuccess } from '../../__shared__/error';
+import { ICloudServiceRepo, 
+         IBlobRepo } from '../../__shared__/interfaces';
 import { FileModel } from './file.model';
-import { IFileInfo, IDriveFileRepo, IFile, IFileInput, PreSignedInfo } from './interfaces';
+import { IFileInfo, 
+         IFileRepo, 
+         IFile, 
+         IFileInput, 
+         PreSignedInfo } from '../interfaces';
 
 export class FileController extends BaseRepo {
-    private blobRepo: IFileRepo;
+    private blobRepo: IBlobRepo;
     cloudService: ICloudServiceRepo; 
-    driveFileRepo: IDriveFileRepo;  
-    constructor (driveRepo: IDriveFileRepo, blob: IFileRepo, cloudRepo: ICloudServiceRepo) {
+    fileRepo: IFileRepo;  
+    constructor (repo: IFileRepo, blob: IBlobRepo, cloudRepo: ICloudServiceRepo) {
         super();
         // database management system 
-        this.driveFileRepo = driveRepo;
+        this.fileRepo = repo;
         // AWS S3
         this.blobRepo = blob; 
         // cloud service 
@@ -21,7 +27,7 @@ export class FileController extends BaseRepo {
 
     createPreSignedUrls = async (userId: string, info: IFileInfo[], serverId?: string): Promise<PreSignedInfo | BasicError> => {
         try {
-            const res = await this.driveFileRepo.createPreSignedUrls(userId,info,this.blobRepo,serverId); 
+            const res = await this.fileRepo.createPreSignedUrls(userId,info,this.blobRepo,serverId); 
             if (res instanceof BasicError) throw (res); 
             return res ; 
         } catch (error) {
@@ -29,9 +35,9 @@ export class FileController extends BaseRepo {
         }
     }
     
-    createFile = async (userId: string, fileInput: IFileInput): Promise<IFile | BasicError> => {
+    createFile = async (fileInput: IFileInput): Promise<IFile | BasicError> => {
         try {
-            const res = await this.driveFileRepo.createFile(userId,fileInput); 
+            const res = await this.fileRepo.createFile(fileInput); 
             if (res instanceof BasicError) throw (res); 
             return res ; 
         } catch (error) {
@@ -53,7 +59,7 @@ export class FileController extends BaseRepo {
 
     moveRootFile = async (fileId: string, parentId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const res = await this.driveFileRepo.changeFileParent(fileId,parentId,ownerId); 
+            const res = await this.fileRepo.changeFileParent(fileId,parentId,ownerId); 
             if (res instanceof BasicError) throw (res); 
             if (res.nModified === 1) return {success:true};
         } catch (error) {
@@ -63,7 +69,7 @@ export class FileController extends BaseRepo {
 
     moveNonRootFile = async (fileId: string, parentId: string, ownerId: string, toRoot: boolean): Promise<ISuccess | BasicError> => {
         try {
-            const removeRes = await this.driveFileRepo.removeFileChild(fileId,parentId,ownerId); 
+            const removeRes = await this.fileRepo.removeFileChild(fileId,parentId,ownerId); 
             if (removeRes instanceof BasicError) throw (removeRes); 
             if (toRoot) {
                 return await this.moveToRoot(fileId,parentId,ownerId); 
@@ -77,7 +83,7 @@ export class FileController extends BaseRepo {
 
     moveToRoot = async (fileId: string, parentId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const toRootRes = await this.driveFileRepo.moveFileToRoot(fileId,parentId,ownerId); 
+            const toRootRes = await this.fileRepo.moveFileToRoot(fileId,parentId,ownerId); 
             if (toRootRes instanceof BasicError) throw (toRootRes);
             return toRootRes; 
         } catch (error) {
@@ -87,7 +93,7 @@ export class FileController extends BaseRepo {
 
     changeParent = async (fileId: string, parentId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const changeRes = await this.driveFileRepo.changeFileParent(fileId,parentId,ownerId);
+            const changeRes = await this.fileRepo.changeFileParent(fileId,parentId,ownerId);
             if (changeRes instanceof BasicError) throw (changeRes);
             if (changeRes.nModified === 1) return {success:true};
         } catch (error) {
@@ -97,7 +103,7 @@ export class FileController extends BaseRepo {
 
     setDeletedTrue = async (fileId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const res = await this.driveFileRepo.setDeletedTrue(fileId,ownerId); 
+            const res = await this.fileRepo.setDeletedTrue(fileId,ownerId); 
             if (res instanceof BasicError) throw (res); 
             return res; 
         } catch (error) {
@@ -107,7 +113,7 @@ export class FileController extends BaseRepo {
 
     setDeletedFalse = async (fileId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const res = await this.driveFileRepo.setDeletedFalse(fileId,ownerId); 
+            const res = await this.fileRepo.setDeletedFalse(fileId,ownerId); 
             if (res instanceof BasicError) throw (res); 
             return res; 
         } catch (error) {
@@ -117,7 +123,7 @@ export class FileController extends BaseRepo {
 
     starFile = async (fileId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const res = await this.driveFileRepo.starFile(fileId,ownerId); 
+            const res = await this.fileRepo.starFile(fileId,ownerId); 
             if (res instanceof BasicError) throw (res); 
             return res; 
         } catch (error) {
@@ -127,7 +133,7 @@ export class FileController extends BaseRepo {
 
     unstarFile = async (fileId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
-            const res = await this.driveFileRepo.unstarFile(fileId,ownerId); 
+            const res = await this.fileRepo.unstarFile(fileId,ownerId); 
             if (res instanceof BasicError) throw (res); 
             return res; 
         } catch (error) {
@@ -137,7 +143,7 @@ export class FileController extends BaseRepo {
 
     renameFile = async (fileId: string, ownerId: string, name: string): Promise<ISuccess | BasicError> => {
         try {
-            const res = await this.driveFileRepo.renameFile(fileId,ownerId,name); 
+            const res = await this.fileRepo.renameFile(fileId,ownerId,name); 
             if (res instanceof BasicError) throw (res); 
             return res;  
         } catch (error) {

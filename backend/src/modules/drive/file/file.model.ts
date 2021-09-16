@@ -1,6 +1,5 @@
 import mongoose, { Model } from 'mongoose';
-import { IFileModel } from './interfaces';
-import mongoose_fuzzy_searching, { MongooseFuzzyModel } from 'mongoose-fuzzy-searching'; 
+import { IFileModel } from '../interfaces';
 
 const fileSchema = new mongoose.Schema({
   name: {
@@ -10,7 +9,7 @@ const fileSchema = new mongoose.Schema({
   parentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Folder',
-    required: false
+    required: true
   },
   type: {
     type: String,
@@ -23,12 +22,7 @@ const fileSchema = new mongoose.Schema({
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'the owner username is required'], 
-  },
-  server: {
-    serverId: {type: mongoose.Schema.Types.ObjectId, ref: 'ServerModel'}, 
-    channelId: {type: mongoose.Schema.Types.ObjectId, ref: 'ThndrChannel'},
-    required: false, 
+    required: [true, 'The owner id is required'], 
   },
   size: {
     type: Number,
@@ -44,11 +38,14 @@ const fileSchema = new mongoose.Schema({
   deleted: {
     type: Boolean,
     required: true
-  },  
+  }, 
+  position: {
+    type: Number, 
+    required: true
+  } 
 }, {timestamps: true});
 
 
-fileSchema.plugin(mongoose_fuzzy_searching, {fields: ['name']})
 
-export const FileModel = mongoose.model<IFileModel>('FileModel', fileSchema, 'files') as MongooseFuzzyModel<IFileModel>;
+export const FileModel = mongoose.model<IFileModel>('FileModel', fileSchema, 'files');
 

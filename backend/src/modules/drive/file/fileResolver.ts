@@ -1,16 +1,25 @@
 import 'reflect-metadata';
-import { Arg, Resolver, Ctx, Mutation, Query, ID, Root } from 'type-graphql';
+import { Arg, 
+         Resolver, 
+         Ctx,
+         Mutation, 
+         Query, 
+         ID, 
+         Root } from 'type-graphql';
 import { Service } from 'typedi';
-import { CloudFrontRepo } from '../__shared__/aws/cloudfront';
-import { S3Repo } from '../__shared__/aws/s3';
-import { BasicError } from '../__shared__/error';
-import { Context } from '../__shared__/interfaces';
-import { GenericError } from '../__shared__/schema';
-import { PreSignedInfoOrErrorUnion, SuccessOrErrorUnion } from '../__shared__/types.resolver';
-import { TFile, FileInfo, FileInput } from './file.schema';
+import { CloudFrontRepo } from '../../__shared__/aws/cloudfront';
+import { S3Repo } from '../../__shared__/aws/s3';
+import { BasicError } from '../../__shared__/error';
+import { Context } from '../../__shared__/interfaces';
+import { GenericError } from '../../__shared__/schema';
+import { PreSignedInfoOrErrorUnion, 
+         SuccessOrErrorUnion } from '../../__shared__/types.resolver';
+import { TFile,
+         FileInfo, 
+         FileInput } from './file.schema';
 import { FileController } from './fileController';
 import MongoDBFileRepo from './fileRepo.mongo';
-import { FileOrErrorUnion } from './types.resolver';
+import { FileOrErrorUnion } from '../types.resolver';
 
 @Service()
 @Resolver(() => TFile)
@@ -18,7 +27,7 @@ export class FileResolver {
    private fileControl: FileController; 
    constructor (private readonly mongoFileRepo: MongoDBFileRepo,
                 private readonly s3BlobRepo: S3Repo,
-               private readonly cloudFront: CloudFrontRepo) {
+                private readonly cloudFront: CloudFrontRepo) {
      this.fileControl = new FileController(mongoFileRepo,s3BlobRepo,cloudFront);
    }
 
@@ -61,9 +70,8 @@ export class FileResolver {
                             ownerId: user._id
                           };
                         
-            const res = await this.fileControl.createFile(user._id,input); 
-            if (res instanceof BasicError) throw (res); 
-            console.log('he ', res); 
+            const res = await this.fileControl.createFile(input); 
+            if (res instanceof BasicError) throw (res);
             return {
                 cloudService: this.cloudFront,
                 ...res

@@ -1,27 +1,24 @@
 /* eslint-disable type-graphql/wrong-decorator-signature */
-import { Context } from '../__shared__/interfaces';
-import { Folder, 
-         FolderOptionsInput } from './folder.schema';
-import { FileConnectionOrErrorUnion, 
-         FolderConnectionOrErrorUnion, 
-         FolderOrErrorUnion } from './types.resolver';
-import { GenericError } from '../__shared__/schema';
-import { SuccessOrErrorUnion } from '../__shared__/types.resolver';
-import FolderController from './folderController';
 import { Arg, 
          Ctx, 
          Mutation, 
          Query, 
          Resolver, 
          ID, 
-         Int, 
-         Root } from 'type-graphql';
-import MongoDBFileRepo from './fileRepo.mongo';
+         Int } from 'type-graphql';
+import { Context } from '../../__shared__/interfaces';
+import { Folder, 
+         FolderOptionsInput } from './folder.schema';
+import { FileConnectionOrErrorUnion, 
+         FolderConnectionOrErrorUnion, 
+         FolderOrErrorUnion } from '../types.resolver';
+import { GenericError } from '../../__shared__/schema';
+import { SuccessOrErrorUnion } from '../../__shared__/types.resolver';
+import FolderController from './folderController';
 import MongoDBFolderRepo from './folderRepo.mongo';
-import { CloudFrontRepo } from '../__shared__/aws/cloudfront';
-import { S3Repo } from '../__shared__/aws/s3';
 import { Service } from 'typedi';
-import { TFile } from './file.schema';
+import { TFile } from '../file/file.schema';
+import { FolderType } from './folder.model';
 
 
 @Service()
@@ -29,32 +26,38 @@ import { TFile } from './file.schema';
 export class FolderResolver {
 
     private folderControl: FolderController;
-    constructor (folderRepo: MongoDBFolderRepo, 
-                 fileRepo: MongoDBFileRepo, s3Repo: S3Repo, cloudRepo: CloudFrontRepo) {
-        this.folderControl = new FolderController(folderRepo,fileRepo,s3Repo,cloudRepo); 
+    constructor (folderRepo: MongoDBFolderRepo) {
+        this.folderControl = new FolderController(folderRepo); 
     }
     
     @Mutation(() => FolderOrErrorUnion, {nullable: false})
     async createFolder(
         @Arg('name', () => String, {nullable: false}) name: string,
         @Arg('isPersonal', () => Boolean, {nullable: false}) isPersonal: boolean,
+        @Arg('parentId', () => ID, {nullable: false}) parentId: string,
+        @Arg('type', () => FolderType, {nullable: false}) type: FolderType,
+        @Arg('fileId', () => ID, {nullable: false}) fileId: string, 
         @Ctx() context: Context,
-        @Root() folder: Folder,
-        @Arg('parentId', () => ID, {nullable: true}) parentId?: string,
     ): Promise<typeof FolderOrErrorUnion> {
         try {
             const { user } = context; 
-            if (parentId === null) parentId = ''; 
-            const res = await this.folderControl.createFolder(user._id,
-                                                              name,
-                                                              isPersonal,
-                                                              parentId); 
+            const input = {
+                            ownerId: user._id, 
+                            name, 
+                            isPersonal, 
+                            type, 
+                            parentId: parentId !== '' ? parentId: null,
+                            fileId: fileId !== '' ? fileId : undefined,
+                            starred: false, 
+                            deleted: false, 
+                          }
+            const res = await this.folderControl.createFolder(
+                                                              input
+                                                             ); 
             if ('code' in res) throw (res);
             return {
-              folderControl: this.folderControl,
-              ...folder,
-              ...res
-            }
+                ...res
+            } as Folder
         } catch (error) {
             return error as GenericError; 
         }
@@ -199,8 +202,8 @@ export class FolderResolver {
     async queryFolderChildren(
         @Arg('limit', () => Int, {nullable: false}) limit: number, 
         @Ctx() context: Context,
-        @Arg('cursor', () => String, {nullable: true}) cursor?: string,
-        @Arg('folderId', () => ID, {nullable: true}) folderId?: string,
+        @Arg('cursor', () => String, {nullable: true}) cursor: string | null,
+        @Arg('folderId', () => ID, {nullable: false}) folderId: string,
         @Arg('folderOptionsInput', () => FolderOptionsInput, {nullable: true}) folderOptionsInput?: FolderOptionsInput
     ): Promise<typeof FolderConnectionOrErrorUnion> {
         try {
@@ -214,27 +217,7 @@ export class FolderResolver {
         }
     }
 
-    @Query(() => FileConnectionOrErrorUnion, {nullable: false})
-    async queryFileChildren(
-        @Arg('limit', () => Int, {nullable: false}) limit: number, 
-        @Ctx() context: Context,
-        @Arg('cursor', () => String, {nullable: true}) cursor?: string,
-        @Arg('folderId', () => ID, {nullable: true}) folderId?: string, 
-        @Arg('folderOptionsInput', () => FolderOptionsInput, {nullable:true}) folderOptionsInput?: FolderOptionsInput
-    ): Promise<typeof FileConnectionOrErrorUnion> {
-        try {
-            const { user } = context; 
-            const { _id } = user;
-            const res = await this.folderControl.getFolderFiles(_id,folderId,limit,cursor,folderOptionsInput);
-            if ('code' in res) throw (res);
-            const { cloudService } = this.folderControl; 
-            res.edges.forEach((file) => {
-              (file as TFile).cloudService = cloudService; 
-            })
-            return res;  
-        } catch (error) {
-            return error as GenericError; 
-        }
-    }
+
+
 
 }

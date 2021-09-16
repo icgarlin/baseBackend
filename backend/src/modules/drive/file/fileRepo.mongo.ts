@@ -1,35 +1,55 @@
-import { IDriveFileRepo, 
+import mongoose from 'mongoose'; 
+import { IFileRepo, 
          IFile, 
          IFileInfo, 
          IFileInput, 
-         PreSignedInfo } from './interfaces';
+         PreSignedInfo } from '../interfaces';
 import { FileModel } from './file.model';
 import { BasicError, 
          ErrorCode, 
-         ISuccess } from '../__shared__/error';
+         ISuccess } from '../../__shared__/error';
 import { ObjectID } from 'mongodb';
-import { IFileRepo, 
-         UpdatedDocument } from '../__shared__/interfaces';
+import { IBlobRepo, 
+         UpdatedDocument } from '../../__shared__/interfaces';
 import { Service } from 'typedi';
-import { FolderModel } from './folder.model';
-import BaseRepo from '../__shared__/baseRepo';
+import { FolderModel } from '../folder/folder.model';
+import BaseRepo from '../../__shared__/baseRepo';
 
 
 @Service()
-class MongoDBFileRepo extends BaseRepo implements IDriveFileRepo {
+class MongoDBFileRepo extends BaseRepo implements IFileRepo {
     // private fromCursorHash = (cursor: string): string => Buffer.from(cursor, 'base64').toString('ascii');
-    // private toCursorHash = (cursor: string): string => cursor ? Buffer.from(cursor).toString('base64') : '';
     findFileByName = async (userId: string, name: string): Promise<IFile | BasicError> => {
         try {
             const fileExists = await FileModel.findOne({ownerId:userId,name}) as IFile;
             if (fileExists instanceof BasicError)  throw (new BasicError(ErrorCode.UserInputError)); 
             return fileExists; 
         } catch (error) {
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+              } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+              } else if (error instanceof BasicError) {
+                return error
+            } 
+        }
+    }
+
+    searchFiles = async (userId: string, pattern: string): Promise<IFile[] | BasicError> => {
+        try {
+            const regex = new RegExp(pattern); 
+            const files = await FileModel.find({ownerId: userId,name:{$regex: regex, $options : 'ix'}}); 
+            const fileList = files.map((file) => {
+                return file.toObject(); 
+            })
+            return fileList as IFile[];  
+        } catch (error) {
             return error as BasicError; 
         }
     }
 
-    createPreSignedUrls = async (userId: string, info: IFileInfo[], blobRepo: IFileRepo, serverId?: string): Promise<PreSignedInfo> => {
+
+    createPreSignedUrls = async (userId: string, info: IFileInfo[], blobRepo: IBlobRepo, serverId?: string): Promise<PreSignedInfo> => {
         const urls: string[] = []; 
         const keys: string[] = [];
         await Promise.all(info.map(async (file) => {
@@ -57,52 +77,31 @@ class MongoDBFileRepo extends BaseRepo implements IDriveFileRepo {
         }
     }
 
-    searchFiles = async (userId: string, pattern: string): Promise<IFile[] | BasicError> => {
+    createFile = async (fileInput: IFileInput): Promise<IFile | BasicError> => {
         try {
-            const regex = new RegExp(pattern); 
-            const files = await FileModel.find({ownerId: userId,name:{$regex: regex, $options : 'ix'}}); 
-            const fileList = files.map((file) => {
-                return file.toObject(); 
-            })
-            return fileList as IFile[];  
+            const { parentId, name, key, size, type, ownerId } = fileInput; 
+             const fileRes = await this.findFileByName(ownerId,name);
+             if ('_id' in fileRes) throw (new BasicError(ErrorCode.UserInputError,`Duplicate item`))
+             if (fileRes instanceof BasicError) throw (fileRes); 
+             const newFile = await FileModel.create({
+                                                        name,
+                                                        ownerId, 
+                                                        key,
+                                                        parentId, 
+                                                        size,
+                                                        type, 
+                                                        deleted: false,
+                                                        isPersonal: true
+                                                    })
+              return newFile.toObject() as IFile;  
         } catch (error) {
-            return error as BasicError; 
-        }
-    }
-
-    
-    createFile = async (userId: string, fileInput: IFileInput): Promise<IFile | BasicError> => {
-        try {
-            const { parentId, name, key, size, type } = fileInput; 
-             const fileRes = this.findFileByName(userId,name);
-             if ('_id' in fileRes || fileRes instanceof BasicError) throw (fileRes); 
-             let fileStruct: IFileInput; 
-             if (parentId === null || parentId === undefined || parentId === '') {
-                 fileStruct = {
-                    name,
-                    ownerId: userId, 
-                    key,
-                    size,
-                    type, 
-                    deleted: false,
-                    isPersonal: true
-                 }
-             } else {
-                fileStruct = {
-                    name,
-                    ownerId: userId, 
-                    key,
-                    parentId, 
-                    size,
-                    type, 
-                    deleted: false,
-                    isPersonal: true
-                } 
-             }
-             const newFile = await FileModel.create(fileStruct);
-             return (newFile.toObject() as IFile); 
-        } catch (error) {
-             return error as BasicError; 
+              if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+              } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+              } else if (error instanceof BasicError) {
+                return error
+              }
         }
  
     }
@@ -340,6 +339,7 @@ class MongoDBFileRepo extends BaseRepo implements IDriveFileRepo {
             return file.toObject(); 
         })
         return fileList as IFile[]; 
+      return []
     } catch (error) {
       return error as BasicError;
     }

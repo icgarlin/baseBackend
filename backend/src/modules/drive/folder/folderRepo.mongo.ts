@@ -1,12 +1,18 @@
-import { ObjectID } from "mongodb";
-import { Service } from "typedi";
-import { BasicError, ErrorCode, ISuccess } from "../__shared__/error";
-import { UpdatedDocument } from "../__shared__/interfaces";
-import { FolderModel } from "./folder.model";
-import { IDriveFolderRepo, IFolder, IFolderInput, IFolderOptionsInput } from "./interfaces";
+import mongoose from 'mongoose'; 
+import { ObjectID } from 'mongodb';
+import { Service } from 'typedi';
+import { BasicError, 
+         ErrorCode, 
+         ISuccess } from '../../__shared__/error';
+import { UpdatedDocument } from '../../__shared__/interfaces';
+import { FolderModel } from './folder.model';
+import { IFolderRepo, 
+         IFolder, 
+         IFolderInput, 
+         IFolderOptionsInput } from '../interfaces';
 
 @Service()
-class MongoDBFolderRepo implements IDriveFolderRepo {
+class MongoDBFolderRepo implements IFolderRepo {
     private fromCursorHash = (cursor: string): string => Buffer.from(cursor, 'base64').toString('ascii');
     toCursorHash = (cursor: string): string => cursor ? Buffer.from(cursor).toString('base64') : ''; 
     
@@ -17,9 +23,29 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (folder instanceof BasicError) throw (folder); 
             return folder as IFolder; 
         } catch (error) {
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
+        }
+    }  
+    
+    searchFolders = async (userId: string, pattern: string): Promise<IFolder[] | BasicError> => {
+        try {
+            const regex = new RegExp(pattern); 
+            const folders = await FolderModel.find({ownerId: userId,name:{$regex: regex, $options : 'ix'}}); 
+            const folderList = folders.map((folder) => {
+                return folder.toObject(); 
+            })
+            return folderList as IFolder[]; 
+        } catch (error) {   
             return error as BasicError; 
         }
-    }   
+    }
+
     
     removeFileChild = async (fileId: string, parentId: string, userId: string): Promise<UpdatedDocument | BasicError> => {
         try {
@@ -31,7 +57,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (res instanceof BasicError) return res; 
             return res; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            } 
         }
     }
 
@@ -46,21 +78,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (res.nModified === 1) return {success:true}; 
             else throw (new BasicError()); 
         } catch (error) {
-            return error as BasicError; 
-        }
-    }
-
-
-    searchFolders = async (userId: string, pattern: string): Promise<IFolder[] | BasicError> => {
-        try {
-            const regex = new RegExp(pattern); 
-            const folders = await FolderModel.find({ownerId: userId,name:{$regex: regex, $options : 'ix'}}); 
-            const folderList = folders.map((folder) => {
-                return folder.toObject(); 
-            })
-            return folderList as IFolder[]; 
-        } catch (error) {   
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -71,43 +95,58 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if ('_id' in folder) return true; 
             else return false; 
         } catch (error) {
-            return error as BasicError
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
-    createFolder = async (userId: string, name: string, personal: boolean, parentId: string): Promise<IFolder | BasicError> => {
-        try {
-            const folderExists = await this.doesFolderExist(name,userId);
-            if (folderExists) throw (new BasicError(ErrorCode.UserInputError)); 
-            if (folderExists instanceof BasicError) throw (folderExists); 
-            let folderStruct: IFolderInput; 
-            if (parentId !== null || parentId === '' || parentId === undefined) {
-                folderStruct = {
-                    parentId,
-                    ownerId: userId, 
-                    isPersonal: personal,
-                    name,
-                    starred: false,
-                    deleted: false
-                }
-            } else {
-                folderStruct = {
-                    ownerId: userId, 
-                    isPersonal: personal,
-                    name,
-                    starred: false,
-                    deleted: false
-                } 
+
+    createFolderAtRoot = async (input: IFolderInput): Promise<IFolder | BasicError> => {
+        try { 
+            const { name, ownerId, isPersonal } = input; 
+            const folderExists = await this.doesFolderExist(name,ownerId);
+            if (folderExists === true) throw (new BasicError(ErrorCode.UserInputError,`Item with that name found`)); 
+            if (folderExists instanceof Error) throw (folderExists); 
+            const newFolder = await FolderModel.create({
+                                                         ownerId, 
+                                                         name, 
+                                                         isPersonal, 
+                                                         parentId: null, 
+                                                         starred: false, 
+                                                         deleted: false
+                                                       });
+            return newFolder.toObject() as IFolder; 
+        } catch (error) {
+            if (error instanceof mongoose.Error.ValidationError) {
+              return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+              return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+              return error
             }
-            const folder = await FolderModel.create(folderStruct); 
-            if (folder instanceof BasicError) throw (folder); 
+        }
+    }
+
+    createFolder = async (input: IFolderInput): Promise<IFolder | BasicError> => {
+        try {
+            const { name, ownerId } = input; 
+            const folderExists = await this.doesFolderExist(name,ownerId);
+            if (folderExists) throw (new BasicError(ErrorCode.UserInputError,`Duplicate item`)); 
+            if (folderExists instanceof BasicError) throw (folderExists); 
+            const folder = await FolderModel.create(input); 
             return folder.toObject() as IFolder; 
         } catch (error) {
-            if (error instanceof BasicError) {
-                if (error.code === 420) {
-                    error.message = 'DUPLICATE FOLDER NAME'; 
-                    return error; 
-                }
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
             }
         }
     }
@@ -122,7 +161,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (updatedFolder.nModified === 1) return {success:true}; 
             else throw (new BasicError()); 
         } catch (error) {
-            return error as BasicError;  
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            } 
         }
     }
 
@@ -133,7 +178,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (updated.nModified === 1) return {success:true}; 
             else throw (new BasicError()); 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -144,7 +195,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
            if (updated.nModified === 1) return {success:true}; 
            else throw (new BasicError());  
         } catch (error) { 
-           return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }   
     }
 
@@ -156,7 +213,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (deletedFolder instanceof Error) throw (deletedFolder); 
             return deletedFolder; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            } 
         }
     }
 
@@ -164,10 +227,10 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
         try {
 
             let res: IFolder[] | BasicError; 
-            if (folderOptionsInput === undefined && folderId !== undefined) {
+            if (folderOptionsInput === undefined && folderId !== '') {
                 // If Open Folder 
                 res = await this.getFoldersByParentId(userId,limit,cursor,folderId); 
-            } else if ((folderId === undefined || folderId === '' || folderId === null) && folderOptionsInput !== undefined) {
+            } else if ((folderId === '') && folderOptionsInput !== undefined) {
                 // If Starred, or Deleted Page
  
                 const { deleted, starred } = folderOptionsInput; 
@@ -178,7 +241,7 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
                 } else if (starred !== undefined && starred) {
                     res = await this.getStarredFolders(userId,limit,cursor); 
                 }
-            } else if ((folderId === undefined || folderId === '' || folderId === null) && folderOptionsInput === undefined) {
+            } else if ((folderId === '') && folderOptionsInput === undefined) {
                 // If Home page
 
                 res = await this.getRootFoldersByCreated(userId,limit,cursor); 
@@ -187,7 +250,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (res instanceof BasicError) throw (res); 
             return res; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -249,7 +318,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (folders instanceof BasicError) throw (folders);  
             return folders; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -306,10 +381,16 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
                                                 },
                                                 ]).exec() as IFolder[];
     
-            if (folders instanceof BasicError) throw (folders);  
             return folders; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
+          
         }
     }
 
@@ -373,7 +454,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (folders instanceof BasicError) throw (folders);  
             return folders; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            } 
         }
     }
 
@@ -419,7 +506,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (folders instanceof BasicError) throw (folders);  
             return folders; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -481,7 +574,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
             if (folders instanceof BasicError) throw (folders);  
             return folders; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -495,7 +594,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
            if (updated instanceof BasicError) throw (updated); 
            return {success:true}; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -508,7 +613,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
            if (updated instanceof BasicError) throw (updated); 
            return {success:true}; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            } 
         }
     }
 
@@ -521,7 +632,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
            if (updated instanceof BasicError) throw (updated); 
            return {success:true}; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 
@@ -535,7 +652,13 @@ class MongoDBFolderRepo implements IDriveFolderRepo {
            if (updated instanceof BasicError) throw (updated); 
            return {success:true}; 
         } catch (error) {
-            return error as BasicError; 
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+            } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+            } else if (error instanceof BasicError) {
+                return error
+            }
         }
     }
 

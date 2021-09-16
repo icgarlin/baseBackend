@@ -1,10 +1,8 @@
-import { BasicError } from "../__shared__/error";
-import { IDriveFileRepo, 
-         IDriveFolderRepo, 
-         IFile, 
+import { BasicError } from '../__shared__/error';
+import { IFileRepo, 
+         IFolderRepo, 
          IFileAndFolderList, 
-         IFileOrFolderConnection, 
-         IFolder} from './interfaces';
+         IFileOrFolderConnection } from './interfaces';
 
 
 
@@ -13,24 +11,13 @@ import { IDriveFileRepo,
 
 class DriveController { 
 
-  private fileRepo: IDriveFileRepo; 
-  private folderRepo: IDriveFolderRepo; 
+  private fileRepo: IFileRepo; 
+  private folderRepo: IFolderRepo; 
 
-  constructor (folderRepo: IDriveFolderRepo, fileRepo: IDriveFileRepo) {
+  constructor (folderRepo: IFolderRepo, fileRepo: IFileRepo) {
     this.folderRepo = folderRepo; 
     this.fileRepo = fileRepo; 
   }
-
-  // addFileRepo = (repo: IDriveFileRepo): DriveController => {
-  //   this.fileRepo = repo; 
-  //   return this; 
-  // }
-
-  // addFolderRepo = (repo: IDriveFolderRepo): DriveController => {
-  //   this.folderRepo = repo; 
-  //   return this; 
-  // }
-
 
   getFolderChildren = async (userId: string, parentId: string, limit: number, cursor: string | null): Promise<IFileOrFolderConnection | BasicError>  => {
     try { 
