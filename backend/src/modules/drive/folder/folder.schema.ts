@@ -70,6 +70,18 @@ export class FolderList {
    folders: Folder[]; 
 }
 
-
+@InputType()
+export class FolderInput {
+   @Field(() => String, {nullable: false}) 
+   name: string;
+   @Field(() => Boolean, {nullable: false}) 
+   isPersonal: boolean; 
+   @Field(() => ID, {nullable: false}) 
+   parentId: string; 
+   @Field(() => FolderType, {nullable: false}) 
+   type: FolderType; 
+   @Field(() => ID, {nullable: false}) 
+   fileId: string; 
+}   
 
 

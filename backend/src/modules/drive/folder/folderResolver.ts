@@ -8,6 +8,7 @@ import { Arg,
          Int } from 'type-graphql';
 import { Context } from '../../__shared__/interfaces';
 import { Folder, 
+    FolderInput, 
          FolderOptionsInput } from './folder.schema';
 import { FileConnectionOrErrorUnion, 
          FolderConnectionOrErrorUnion, 
@@ -32,15 +33,12 @@ export class FolderResolver {
     
     @Mutation(() => FolderOrErrorUnion, {nullable: false})
     async createFolder(
-        @Arg('name', () => String, {nullable: false}) name: string,
-        @Arg('isPersonal', () => Boolean, {nullable: false}) isPersonal: boolean,
-        @Arg('parentId', () => ID, {nullable: false}) parentId: string,
-        @Arg('type', () => FolderType, {nullable: false}) type: FolderType,
-        @Arg('fileId', () => ID, {nullable: false}) fileId: string, 
+        @Arg('folderInput', () => FolderInput, {nullable: false}) folderInput: FolderInput,
         @Ctx() context: Context,
     ): Promise<typeof FolderOrErrorUnion> {
         try {
             const { user } = context; 
+            const { parentId, isPersonal, fileId, type, name } = folderInput; 
             const input = {
                             ownerId: user._id, 
                             name, 
