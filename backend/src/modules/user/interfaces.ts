@@ -28,10 +28,10 @@ export interface IUserRepo extends IProfileEditRepo {
   updateSubscriptionStatusByProductId: (customerId: string, productId: string, status: string) => Promise<ISuccess | BasicError>; 
   removeSubscriptionInfo: (customerId: string, productId: string) => Promise<ISuccess | BasicError>; 
   getSubscriptionIdFromOwner: (userId: string, serverId: string) => Promise<string | BasicError>; 
-  addToFollowing: (userId: string, followingUserId: string) => Promise<ISuccess | BasicError>;
-  removeFromFollowing: (userId: string, followingUserId: string) => Promise<ISuccess | BasicError>;
-  addToFollowers: (userId: string, followerUserId: string) => Promise<ISuccess | BasicError>;
-  removeFromFollowers: (userId: string, followerUserId: string) => Promise<ISuccess | BasicError>;  
+  // addToFollowing: (userId: string, followingUserId: string) => Promise<ISuccess | BasicError>;
+  // removeFromFollowing: (userId: string, followingUserId: string) => Promise<ISuccess | BasicError>;
+  // addToFollowers: (userId: string, followerUserId: string) => Promise<ISuccess | BasicError>;
+  // removeFromFollowers: (userId: string, followerUserId: string) => Promise<ISuccess | BasicError>;  
   addToConnected: (userId: string, connectId: string) => Promise<ISuccess | BasicError>;
   getConnections: (userId: string) => Promise<IUser[] | BasicError>; 
   isConnection: (userId: string, connectId: string) => Promise<boolean | BasicError>
