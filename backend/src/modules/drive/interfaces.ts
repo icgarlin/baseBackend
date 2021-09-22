@@ -131,9 +131,8 @@ export interface IFileInput {
    ownerId: string; 
    key: string; 
    size: number; 
-   type: string; 
-   deleted: boolean;
-   parentId: string | null; 
+   type: string;
+   parentId: string; 
    isPersonal: boolean; 
 }
 

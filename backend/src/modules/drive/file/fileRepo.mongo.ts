@@ -87,7 +87,7 @@ class MongoDBFileRepo extends BaseRepo implements IFileRepo {
                                                         name,
                                                         ownerId, 
                                                         key,
-                                                        parentId, 
+                                                        parentId: parentId === '' ? null : parentId, 
                                                         size,
                                                         type, 
                                                         deleted: false,

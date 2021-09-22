@@ -81,12 +81,10 @@ export class FileInput {
   @Field(() => String, {nullable: false})
   ownerId: string; 
   @Field(() => Boolean, {nullable: false})
-  deleted: boolean; 
-  @Field(() => Boolean, {nullable: false})
   isPersonal: boolean;
   @Field(() => String, {nullable: false})
   key: string; 
-  @Field(() => String)
+  @Field(() => String, {nullable: false})
   parentId: string;
   @Field(() => String, {nullable: false})
   name: string;
