@@ -92,8 +92,8 @@ export const FileOrFolderUnion = createUnionType({
     name: 'FileOrFolder', // the name of the GraphQL union
     types: () => [TFile, Folder] as const, // function that returns tuple of object types classes
     resolveType: value => {
-       if ('key' in value) return typeof TFile; 
-       else return typeof Folder; 
+       if ('key' in value) return TFile; 
+       else return Folder; 
     },
  });
 
