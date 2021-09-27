@@ -13,6 +13,7 @@ import BaseRepo from '../__shared__/baseRepo';
 export interface IFileRepo extends BaseRepo { 
    fromCursorHash: (cursor: string) => string;
    toCursorHash: (cursor: string) => string; 
+   getFile: (ownerId: string, fileId: string) => Promise<IFile | BasicError>; 
    findFileByName: (userId: string, name: string) => Promise<IFile | BasicError>; 
    atRoot: (fileId: string, ownerId: string) => Promise<boolean | BasicError>; 
    moveFileToRoot: (fileId: string, parentId: string, ownerId: string) => Promise<ISuccess | BasicError>; 
@@ -29,7 +30,6 @@ export interface IFileRepo extends BaseRepo {
    renameFile: (fileId: string, ownerId: string, name: string) => Promise<ISuccess | BasicError>; 
    createPreSignedUrls: (userId: string, info: IFileInfo[], blobRepo: IBlobRepo, serverId?: string) => Promise<PreSignedInfo>; 
    createFile: (fileInput: IFileInput) => Promise<IFile | BasicError>; 
-   removeFileChild: (fileId: string, parentId: string, userId: string) => Promise<ISuccess | BasicError>;
    getFilesByMatchingPattern: (userId: string, pattern: string) => Promise<IFile[] | BasicError>; 
    searchFiles: (userId: string, pattern: string) => Promise<IFile[] | BasicError>; 
 }
@@ -68,7 +68,6 @@ export interface IFile {
    type: IFileModel['key']; 
    isPersonal: IFileModel['isPersonal']; 
    deleted: IFileModel['deleted'];
-   starred: IFileModel['starred'];
    position: IFileModel['position']; 
    updatedAt: IFileModel['updatedAt'];
    createdAt: IFileModel['createdAt']; 
@@ -84,7 +83,6 @@ export interface IFolder {
    ownerId: IFolderModel['ownerId']; 
    isPersonal: IFolderModel['isPersonal'];
    deleted: IFolderModel['deleted']; 
-   starred: IFolderModel['starred']; 
    position: IFolderModel['position']; 
    createdAt: IFolderModel['createdAt']; 
    updatedAt: IFolderModel['updatedAt'];
@@ -160,12 +158,12 @@ export interface IFolderOptionsInput {
 
 
 export interface IFileAndFolderList { 
-   items: (IFile | IFolder)[];  
+   items: [IFile | IFolder];  
  }
 
 
 export interface IFileOrFolderConnection {
-   edges: (IFile | IFolder)[]; 
+   edges: [IFile | IFolder]; 
    pageInfo: IPageInfo; 
  }
  

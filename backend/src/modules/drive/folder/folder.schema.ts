@@ -47,9 +47,7 @@ export class Folder {
    @Field(() => Date, {nullable: false})
    updatedAt: Date; 
    @Field(() => Boolean, {nullable: false})
-   deleted: boolean;
-   @Field(() => Boolean, {nullable: false})
-   starred: boolean; 
+   deleted: boolean; 
    @Field(() => Boolean, {nullable: false})
    isPersonal: boolean; 
    @Field(() => String, {nullable: false})

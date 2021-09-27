@@ -49,9 +49,10 @@ export class FileController extends BaseRepo {
         try {
             if (atRoot) {
                 return await this.moveRootFile(fileId,parentId,ownerId); 
-            } else {
-                return await this.moveNonRootFile(fileId,parentId,ownerId,toRoot); 
-            }
+            } 
+            // else {
+            //     return await this.moveNonRootFile(fileId,parentId,ownerId,toRoot); 
+            // }
         } catch (error) {
             return error as BasicError; 
         }
@@ -62,20 +63,6 @@ export class FileController extends BaseRepo {
             const res = await this.fileRepo.changeFileParent(fileId,parentId,ownerId); 
             if (res instanceof BasicError) throw (res); 
             if (res.nModified === 1) return {success:true};
-        } catch (error) {
-            return error as BasicError; 
-        }
-    }
-
-    moveNonRootFile = async (fileId: string, parentId: string, ownerId: string, toRoot: boolean): Promise<ISuccess | BasicError> => {
-        try {
-            const removeRes = await this.fileRepo.removeFileChild(fileId,parentId,ownerId); 
-            if (removeRes instanceof BasicError) throw (removeRes); 
-            if (toRoot) {
-                return await this.moveToRoot(fileId,parentId,ownerId); 
-            } else {    
-                return await this.changeParent(fileId,parentId,ownerId); 
-            }
         } catch (error) {
             return error as BasicError; 
         }
@@ -151,40 +138,12 @@ export class FileController extends BaseRepo {
         }
     }
 
-    getStarredFiles = async (userId: string, limit: number, cursor: string | null): Promise<IFile[] | BasicError> => {
-        try {
-             const cursorTime = cursor
-            ? new Date(this.fromCursorHash(cursor)) //.toISOString()
-            : null;
-            const match = {
-                        // no cursor is needed for the first query
-                    ...(cursorTime && {
-                        createdAt: {
-                        $lt: cursorTime, //MORA NEW DATE(), sa toISOString ne radi
-                        },
-                    }),
-                    $and:[
-                            {
-                            'ownerId': new ObjectID(userId)
-                            },
 
-                            {
-                            'starred': true
-                            }
-                        ],
-            };
-            const fileFeed = await FileModel.aggregate([
-                                                { $match: match },
-                                                {
-                                                    $sort: {
-                                                    'createdAt': -1,
-                                                    },
-                                                },
-                                                {
-                                                    $limit: limit + 1,
-                                                },
-                                                ]).exec() as IFile[];
-            return fileFeed; 
+    getFile = async (ownerId: string, fileId: string): Promise<IFile | BasicError> => {
+        try {
+            const res = await this.fileRepo.getFile(ownerId,fileId); 
+            if ('code' in res) throw (res); 
+            return res; 
         } catch (error) {
             return error as BasicError; 
         }

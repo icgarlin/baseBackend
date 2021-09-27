@@ -13,7 +13,7 @@ export interface Context {
 // FIXME: 
 // Create better naming distinction between S3 database files and 
 // the File domain in Thndr microservices 
-export interface IFileRepo {
+export interface IBlobRepo {
   downloadFile: (key: string, bucket: string) => Promise<ISuccess | BasicError>; 
   sizeOfFile: (key: string, bucket: string) => Promise<number | BasicError>; 
   getS3SignedUrl: (bucketName: string, key: string, expires: number, type: string, acl: string) => Promise<string | BasicError>;

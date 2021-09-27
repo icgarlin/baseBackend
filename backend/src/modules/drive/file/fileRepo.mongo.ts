@@ -106,21 +106,6 @@ class MongoDBFileRepo extends BaseRepo implements IFileRepo {
  
     }
 
-    removeFileChild = async (fileId: string, parentId: string, userId: string): Promise<ISuccess | BasicError> => {
-       try {
-         const res = await FolderModel.updateOne({_id: parentId, ownerId: userId}, {
-                                                                                    $pull: {
-                                                                                        'childrenIds': fileId
-                                                                                    }
-                                                                                }) as UpdatedDocument;
-         if (res instanceof BasicError) return res;
-         if (res.nModified === 1) return {success:true}; 
-         else throw (res);
-       } catch (error) {
-           return error as BasicError; 
-       }
-    }
-
     moveFileToRoot = async (fileId: string, parentId: string, ownerId: string): Promise<ISuccess | BasicError> => {
         try {
             const updated = await FileModel.updateOne({_id: fileId, ownerId, parentId}, {$unset:{parentId:1}}) as UpdatedDocument; 
@@ -408,6 +393,20 @@ class MongoDBFileRepo extends BaseRepo implements IFileRepo {
     }
 
 
+    getFile = async (ownerId: string, fileId: string): Promise<IFile | BasicError> => {
+        try { 
+            const res = await FileModel.findOne({_id: fileId, ownerId}) 
+            return (res.toObject() as IFile); 
+        } catch (error) {
+            if (error instanceof mongoose.Error.ValidationError) {
+                return new BasicError(ErrorCode.InternalServerError,error.message)
+              } else if (error instanceof mongoose.Error) {
+                return new BasicError(ErrorCode.BadRequest,error.message); 
+              } else if (error instanceof BasicError) {
+                return error
+            } 
+        }
+    }
 
 
 }

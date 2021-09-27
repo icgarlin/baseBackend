@@ -180,6 +180,24 @@ export class FileResolver {
         }
     }
 
+
+    @Query(() => FileOrErrorUnion)
+    async getFileData(
+        @Arg('fileId', () => ID, {nullable:false}) fileId: string, 
+        @Ctx() context: Context
+    ): Promise<typeof FileOrErrorUnion> {
+        try {
+            const { user } = context; 
+            const { _id } = user; 
+            const res = await this.fileControl.getFile(_id,fileId); 
+            if (res instanceof BasicError) throw (res);
+            return res; 
+        } catch (error) {
+            return error as GenericError; 
+        }
+    }
+
+
 }
 
 

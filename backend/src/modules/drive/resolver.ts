@@ -52,13 +52,9 @@ export class DriveResolver {
      try {  
         const { user } = context; 
         const { _id } = user; 
-        const { parentId, starred, deleted } = options; 
-        if (!parentId && !starred && !deleted) {
+        const { parentId, deleted } = options; 
+        if (!parentId && !deleted) {
           const res = await this.driveControl.getRootDriveData(_id,limit,cursor); 
-          if (res instanceof Error) throw (res);
-          return res; 
-        } else if (starred) { 
-          const res = await this.driveControl.getStarredDriveData(_id,limit,cursor);
           if (res instanceof Error) throw (res);
           return res; 
         } else if (deleted) {
