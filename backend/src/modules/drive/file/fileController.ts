@@ -1,10 +1,8 @@
-import { ObjectID } from 'mongodb';
 import BaseRepo from '../../__shared__/baseRepo';
 import { BasicError, 
          ISuccess } from '../../__shared__/error';
 import { ICloudServiceRepo, 
          IBlobRepo } from '../../__shared__/interfaces';
-import { FileModel } from './file.model';
 import { IFileInfo, 
          IFileRepo, 
          IFile, 

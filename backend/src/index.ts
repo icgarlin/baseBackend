@@ -1,7 +1,7 @@
 import { buildApolloServerGateway } from './config/apollo';
 import app from './app';
 import { createServer } from 'http';
-import * as SocketServer from 'socket.io';
+import { Server } from 'socket.io';
 import { buildSocket } from './modules/__shared__/socket';
 import { mongooseConnect } from './config/mongodb/db.mongo';
 import ServerController from './modules/server/controller';
@@ -12,7 +12,9 @@ import { S3Repo } from './modules/__shared__/aws/s3';
 import MongoDBServerRepo from './modules/server/serverRepo.mongo';
 import MongoDBDirectMessageRepo from './modules/dm/repo.mongo';
 import { CloudFrontRepo } from './modules/__shared__/aws/cloudfront';
-import redis from 'socket.io-redis';
+import { createClient } from 'redis'; 
+import { createAdapter } from '@socket.io/redis-adapter';
+
 
 
 
@@ -35,8 +37,12 @@ apolloGate.then((gateway) => {
         mongooseConnect(); 
     });
     gateway.installSubscriptionHandlers(hS); 
-    const io = SocketServer.default(hS, {transports: ['polling']});
-    io.adapter(redis(process.env.REDISCLOUD_URL)); 
+
+    const pubClient = createClient({ host: 'localhost', port: 6379 });
+    const subClient = pubClient.duplicate();
+
+    const io = new Server(hS, {transports: ['polling']});
+    io.adapter(createAdapter(pubClient, subClient)); 
     buildSocket(io,serverControl,dmControl); 
 }).catch((error) => {
     console.log('Our error building server ', error);
