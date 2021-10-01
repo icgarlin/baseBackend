@@ -78,20 +78,4 @@ export class DriveResolver {
  }
 
 
-
- @Query(() =>  FileAndFolderListOrErrorUnion)
- async searchDrive(
-  @Arg('pattern', () => String, {nullable: false}) pattern: string, 
-  @Ctx() context: Context
- ): Promise<typeof FileAndFolderListOrErrorUnion> {
-   try { 
-      const { user } = context; 
-      const { _id } = user; 
-      const res = await this.driveControl.searchDrive(_id,pattern); 
-      if (res instanceof Error) throw (res); 
-      return res; 
-   } catch (error) {
-      return error as GenericError;
-   }
- }
 }
