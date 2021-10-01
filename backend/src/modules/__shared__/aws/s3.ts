@@ -1,15 +1,15 @@
 import { BasicError, ISuccess } from '../error';
 import { s3 } from '../../../config/aws/';
-import { IFileRepo } from '../interfaces';
+import { IBlobRepo } from '../interfaces';
 import FileHelper from '../file.helper';
 import { Service } from 'typedi';
-import { S3 } from 'aws-sdk';
+import { AWSError, S3 } from 'aws-sdk';
 import cryptoRandomString from 'crypto-random-string';
 import { promises as fsp } from 'fs'; 
 
 
 @Service()
-export class S3Repo extends FileHelper implements IFileRepo {
+export class S3Repo extends FileHelper implements IBlobRepo {
 
 
     downloadFile = async (key: string, bucket: string): Promise<ISuccess | BasicError> => {
@@ -30,8 +30,10 @@ export class S3Repo extends FileHelper implements IFileRepo {
               return res.ContentLength; 
              });
         } catch (error) {
-            console.log('the error sie of file ', error);
-            return error as BasicError 
+            if ('code' in error) {
+                const err = (error as AWSError)
+                return new BasicError(parseInt(err.code),err.message); 
+            } 
         }
     }
 
@@ -46,7 +48,11 @@ export class S3Repo extends FileHelper implements IFileRepo {
             });  
             return url; 
         } catch (error) {
-            return error as BasicError; 
+            if ('code' in error) {
+                const err = (error as AWSError)
+                return new BasicError(parseInt(err.code),err.message); 
+            } 
+          
         }
     }
 
@@ -78,25 +84,25 @@ export class S3Repo extends FileHelper implements IFileRepo {
         } 
     }
 
-    deleteFile = (key: string): ISuccess | BasicError => {
+    deleteFile = async (key: string): Promise<boolean | BasicError> => {
         try {
             const params = {
               Bucket: process.env.AWS_BUCKET_NAME,
               Key: key
             }
-            let deleteData: S3.DeleteObjectOutput; 
-            s3.deleteObject(params, (err, data) => {
+
+            const res = await s3.deleteObject(params, (err, data) => {
                 if (err) {
-                    console.log('error ', err);
                     throw (err);  
                 }
-                if (data) deleteData = data;
-            });
-            if (deleteData === null || deleteData === undefined) return {success:true}; 
-            else throw (new BasicError()); 
+            }).promise();
+
+            return res.DeleteMarker; 
         } catch (error) {
-            console.log('errr ', error); 
-            return error as BasicError; 
+            if ('code' in error) {
+                const err = (error as AWSError)
+                return new BasicError(parseInt(err.code),err.message); 
+            } 
         }
     }
 

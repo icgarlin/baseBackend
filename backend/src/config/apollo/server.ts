@@ -13,7 +13,7 @@ interface TApolloServerConfig {
     application: Express; 
     apiKey: string; 
     schema: GraphQLSchema;
-    restSources: DataSources<object>;
+    restSources?: DataSources<object>;
     playground: boolean; 
     introspection: boolean; 
 }
@@ -22,7 +22,7 @@ class TApolloServer {
 
     private apiKey: string; 
     private schema: GraphQLSchema;
-    private restSources:  DataSources<object>; 
+    private restSources?:  DataSources<object>; 
     private application: Express; 
     public playground: boolean; 
     public introspection: boolean; 

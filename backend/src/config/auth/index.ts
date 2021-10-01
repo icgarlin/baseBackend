@@ -1,4 +1,5 @@
-import { AuthChecker, ResolverData } from 'type-graphql';
+import { AuthChecker, 
+         ResolverData } from 'type-graphql';
 import { Context } from '../../modules/__shared__/interfaces';
 
 

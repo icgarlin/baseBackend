@@ -1,10 +1,12 @@
-import { StatusResolver as statusResolver } from '../../modules/status/resolver';
-import { UserResolver as userResolver } from '../../modules/user/resolver';
-import { Container } from 'typedi';
 import { GraphQLSchema } from 'graphql';
-import { buildSchema, ContainerGetter, ContainerType } from 'type-graphql';
+import { AuthChecker,
+         buildSchema, 
+         ContainerGetter, 
+         ContainerType } from 'type-graphql';
 import { BasicError } from '../../modules/__shared__/error';
-import { PubSubEngine, PubSubOptions } from 'graphql-subscriptions';
+import { PubSubEngine,
+         PubSubOptions } from 'graphql-subscriptions';
+import { Context } from '../../modules/__shared__/interfaces';
 
 
 
@@ -17,6 +19,7 @@ interface TypeGraphQLSchemaBuilderConfig {
   container?: ContainerType | ContainerGetter<any>; 
   validate: boolean;
   pubSub: PubSubEngine | PubSubOptions;  
+  authChecker: AuthChecker<any, any>; 
 }
 
 class TypeGraphQLSchemaBuilder {
@@ -26,10 +29,14 @@ class TypeGraphQLSchemaBuilder {
     private nullableByDefault: TypeGraphQLSchemaBuilderConfig['nullableByDefault']; 
     private validate: TypeGraphQLSchemaBuilderConfig['validate']; 
     private pubSub: PubSubEngine | PubSubOptions; 
+    private authChecker: TypeGraphQLSchemaBuilderConfig['authChecker'];
+
     constructor (config: TypeGraphQLSchemaBuilderConfig) {
        this.resolvers = config.resolvers; 
        this.nullableByDefault = config.nullableByDefault; 
        this.validate = config.validate; 
+       this.pubSub = config.pubSub; 
+       this.authChecker = config.authChecker; 
        if (config.container !== undefined) this.container = config.container; 
 
     }
@@ -41,7 +48,8 @@ class TypeGraphQLSchemaBuilder {
                                        container: this.container,
                                        nullableByDefault: this.nullableByDefault,
                                        validate: this.validate,
-                                       pubSub: this.pubSub
+                                       pubSub: this.pubSub,
+                                       authChecker: this.authChecker
                                     }); 
         } catch (error) {
             return error as BasicError; 

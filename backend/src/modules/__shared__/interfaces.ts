@@ -6,9 +6,7 @@ import { BasicError,
 
 export interface Context {
   user: IUser;
-  dataSources?: {server: ServerAPI, dm: DirectMessageAPI}; 
 }
-
 
 // FIXME: 
 // Create better naming distinction between S3 database files and 
@@ -18,7 +16,7 @@ export interface IBlobRepo {
   sizeOfFile: (key: string, bucket: string) => Promise<number | BasicError>; 
   getS3SignedUrl: (bucketName: string, key: string, expires: number, type: string, acl: string) => Promise<string | BasicError>;
   createUserFileKey: (userId: string, fname: string, ftype: string) => string;
-  deleteFile:  (key: string) => ISuccess | BasicError; 
+  deleteFile:  (key: string) => Promise<boolean | BasicError>; 
   handleGetPreSignedUrl: (fName: string, fType: string, userId: string, serverId?: string) => Promise<{url: string, key: string} | BasicError> 
 }
 

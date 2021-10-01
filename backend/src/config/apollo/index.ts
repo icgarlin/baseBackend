@@ -14,13 +14,15 @@ import ServerAPI from '../../modules/server/api';
 import DirectMessageAPI from '../../modules/dm/api';
 import app from '../../app';
 import { pubSub } from '../redis';
+import { authChecker } from '../auth';
 
 
 
 export const buildApolloServerGateway = async (): Promise<ApolloServer | BasicError> => {
   try {
     const schemaBuilder = new SchemaBuilder({
-                                              resolvers: [ adminResolver,
+                                              resolvers: [ 
+                                                           adminResolver,
                                                            userResolver,
                                                            driveResolver, 
                                                            folderResolver, 
@@ -30,7 +32,8 @@ export const buildApolloServerGateway = async (): Promise<ApolloServer | BasicEr
                                               container: Container,
                                               nullableByDefault: true,
                                               validate: false,
-                                              pubSub: pubSub
+                                              pubSub: pubSub,
+                                              authChecker: authChecker
                                               
                                             })
     const schema = await schemaBuilder.build();
@@ -38,8 +41,6 @@ export const buildApolloServerGateway = async (): Promise<ApolloServer | BasicEr
     const apolloServerBuilder = new TApolloServer({
                                                     apiKey: process.env.APOLLO_KEY,
                                                     schema,
-                                                    restSources: ({ server: new ServerAPI(), 
-                                                                    dm: new DirectMessageAPI() }),
                                                     playground: false,
                                                     introspection: true,
                                                     application: app

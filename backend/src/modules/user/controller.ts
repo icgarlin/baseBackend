@@ -109,33 +109,7 @@ export class UserController {
             return error as BasicError; 
         }
     }
-    
-    follow = async (userId: string, followUserId: string): Promise<ISuccess | BasicError> => {
-        try {
-            const followingRes = await this.userRepo.addToFollowing(userId,followUserId); 
-            if (followingRes instanceof Error) throw (followingRes); 
-            const followerRes = await this.userRepo.addToFollowers(followUserId,userId); 
-            if (followerRes instanceof Error) throw (followerRes); 
-            if ('success' in followingRes && 'success' in followerRes) return {success:true}; 
-            else throw (new BasicError(ErrorCode.BadRequest,`Could not follow`)); 
-        } catch (error) {
-            return error as BasicError; 
-        }
-    }
-
-
-    unfollow = async (userId: string, unfollowUserId: string): Promise<ISuccess | BasicError> => {
-        try {
-            const unfollowerRes = await this.userRepo.removeFromFollowers(unfollowUserId,userId); 
-            if (unfollowerRes instanceof Error) throw (unfollowerRes); 
-            const unfollowingRes = await this.userRepo.removeFromFollowing(userId,unfollowUserId); 
-            if (unfollowingRes instanceof Error) throw (unfollowingRes); 
-            if ('success' in unfollowingRes && 'success' in unfollowerRes) return {success:true}; 
-            else throw (new BasicError(ErrorCode.BadRequest,`Could not unfollow`)); 
-        } catch (error) {
-            return error as BasicError; 
-        }
-    }
+   
 
     acceptConnectRequest = async (userId: string, connectId: string): Promise<ISuccess | BasicError> => {
         try {

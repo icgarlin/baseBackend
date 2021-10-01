@@ -6,7 +6,8 @@ import { Arg,
          Resolver, 
          ID, 
          Int, 
-         Root } from 'type-graphql';
+         Root, 
+         Authorized} from 'type-graphql';
 import { Context } from '../__shared__/interfaces';
 import { Folder, 
          FolderOptionsInput } from './folder/folder.schema';
@@ -41,7 +42,8 @@ export class DriveResolver {
         this.driveControl = new DriveController(folderRepo,fileRepo)
 
     }
-   
+
+ @Authorized()
  @Query(() => FileOrFolderConnectionOrErrorUnion)
  async getDriveData(
     @Arg('limit', () => Int , {nullable: false}) limit: number,
@@ -51,10 +53,13 @@ export class DriveResolver {
  ): Promise<typeof FileOrFolderConnectionOrErrorUnion> {
      try {  
         const { user } = context; 
+        console.log('the user ', user)
         const { _id } = user; 
         const { parentId, deleted } = options; 
+        console.log('our options ', options)
         if (!parentId && !deleted) {
-          const res = await this.driveControl.getRootDriveData(_id,limit,cursor); 
+          const res = await this.driveControl.getRootDriveData(_id,limit,cursor);
+          console.log('the res ', res);  
           if (res instanceof Error) throw (res);
           return res; 
         } else if (deleted) {
@@ -67,6 +72,7 @@ export class DriveResolver {
           return res; 
         }
      } catch (error) {
+         // console.log( 'the err ', error); 
          return error as GenericError; 
      }
  }
