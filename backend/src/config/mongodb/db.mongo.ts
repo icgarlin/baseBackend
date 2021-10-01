@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 export const mongooseConnect = (): void => {
-    mongoose.connect(process.env.MONGO_URI,  {
+    mongoose.connect(process.env.NODE_ENV === 'development' ? process.env.MONGO_URI_DEV : process.env.MONGO_URI_PROD,  {
         useNewUrlParser: true,
         keepAlive: true,
         useFindAndModify: false,

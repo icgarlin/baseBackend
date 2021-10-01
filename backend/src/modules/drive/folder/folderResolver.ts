@@ -18,8 +18,7 @@ import { SuccessOrErrorUnion } from '../../__shared__/types.resolver';
 import FolderController from './folderController';
 import MongoDBFolderRepo from './folderRepo.mongo';
 import { Service } from 'typedi';
-import { TFile } from '../file/file.schema';
-import { FolderType } from './folder.model';
+
 
 
 @Service()
