@@ -163,7 +163,7 @@ export interface IFileAndFolderList {
 
 
 export interface IFileOrFolderConnection {
-   edges: [IFile | IFolder]; 
+   edges: [(IFile | IFolder)]; 
    pageInfo: IPageInfo; 
  }
  

@@ -3,9 +3,8 @@ import { s3 } from '../../../config/aws/';
 import { IBlobRepo } from '../interfaces';
 import FileHelper from '../file.helper';
 import { Service } from 'typedi';
-import { AWSError, S3 } from 'aws-sdk';
+import { AWSError } from 'aws-sdk';
 import cryptoRandomString from 'crypto-random-string';
-import { promises as fsp } from 'fs'; 
 
 
 @Service()

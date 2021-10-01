@@ -141,6 +141,7 @@ class MongoDBFolderRepo implements IFolderRepo {
             const folder = await FolderModel.create(input); 
             return folder.toObject() as IFolder; 
         } catch (error) {
+            console.log('The error ', error); 
             if (error instanceof mongoose.Error.ValidationError) {
                 return new BasicError(ErrorCode.InternalServerError,error.message)
             } else if (error instanceof mongoose.Error) {

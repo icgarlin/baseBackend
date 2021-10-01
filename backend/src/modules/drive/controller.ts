@@ -2,7 +2,9 @@ import { BasicError } from '../__shared__/error';
 import { IFileRepo, 
          IFolderRepo, 
          IFileAndFolderList, 
-         IFileOrFolderConnection } from './interfaces';
+         IFileOrFolderConnection, 
+         IFolder,
+         IFile} from './interfaces';
 
 
 
@@ -25,10 +27,10 @@ class DriveController {
       if (fileChildren instanceof Error) throw (fileChildren); 
       const folderChildren = await this.folderRepo.getFoldersByParentId(userId,limit,cursor,parentId); 
       if (folderChildren instanceof Error) throw (folderChildren); 
-      const res = [...fileChildren, ...folderChildren];
+      const res = [...fileChildren, ...folderChildren] as [(IFile | IFolder)];
       const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
       const hasNextPage = fileOrFolder.length > (limit * 2);
-      const edges = hasNextPage ? fileOrFolder.slice(0, -1) : fileOrFolder; 
+      const edges = hasNextPage ? fileOrFolder.slice(0, -1) as [IFile | IFolder] : fileOrFolder; 
       return  {
          edges,
          pageInfo: {
@@ -50,9 +52,9 @@ class DriveController {
       const rootFolders = await this.folderRepo.getRootFoldersByCreated(userId,limit,cursor); 
       if ('code' in rootFolders) throw (rootFolders); 
       const res = [...rootFiles, ...rootFolders]; 
-      const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as [IFile | IFolder];
       const hasNextPage = fileOrFolder.length > (limit * 2);
-      const edges = hasNextPage ? fileOrFolder.slice(0, -1) : fileOrFolder;
+      const edges = hasNextPage ? fileOrFolder.slice(0, -1) as [IFile | IFolder] : fileOrFolder;
       return {
         edges,
         pageInfo: {
@@ -74,9 +76,9 @@ class DriveController {
         const starredFolders = await this.folderRepo.getStarredFolders(userId,limit,cursor); 
         if ('code' in starredFolders) throw (starredFolders); 
         const res = [...starredFiles, ...starredFolders]; 
-        const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as [IFile | IFolder];
         const hasNextPage = fileOrFolder.length > (limit * 2);
-        const edges = hasNextPage ? fileOrFolder.slice(0, -1) : fileOrFolder;
+        const edges = hasNextPage ? fileOrFolder.slice(0, -1) as [IFile | IFolder] : fileOrFolder;
         return {
           edges,
           pageInfo: {
@@ -98,9 +100,9 @@ class DriveController {
         const deletedFolders = await this.folderRepo.getRecentlyDeletedFolders(userId,limit,cursor); 
         if ('code' in deletedFolders) throw (deletedFolders); 
         const res = [...deletedFiles, ...deletedFolders]; 
-        const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as [IFile | IFolder];
         const hasNextPage = fileOrFolder.length > (limit * 2);
-        const edges = hasNextPage ? fileOrFolder.slice(0, -1) : fileOrFolder;
+        const edges = hasNextPage ? fileOrFolder.slice(0, -1) as [IFile | IFolder] : fileOrFolder;
         return {
           edges,
           pageInfo: {
@@ -124,7 +126,7 @@ class DriveController {
         if (files instanceof Error) throw (files); 
         const res = [...files, ...folders]; 
         const filesAndFolders = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-        return { items: filesAndFolders }; 
+        return { items: filesAndFolders as [IFile | IFolder] }; 
       } catch (error) {
           return error as BasicError; 
       }

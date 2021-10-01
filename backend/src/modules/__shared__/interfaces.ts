@@ -1,5 +1,3 @@
-import DirectMessageAPI from '../dm/api';
-import ServerAPI from '../server/api';
 import { IUser } from '../user/interfaces';
 import { BasicError,
          ISuccess } from './error';
@@ -10,7 +8,7 @@ export interface Context {
 
 // FIXME: 
 // Create better naming distinction between S3 database files and 
-// the File domain in Thndr microservices 
+// the File domain in microservices 
 export interface IBlobRepo {
   downloadFile: (key: string, bucket: string) => Promise<ISuccess | BasicError>; 
   sizeOfFile: (key: string, bucket: string) => Promise<number | BasicError>; 

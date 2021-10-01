@@ -19,7 +19,8 @@ export interface IFolderModel extends Document {
 }
 
 export enum FolderType { 
-  DRAFTS = 'DRAFTS',
+  DRAFT = 'DRAFTS',
+  DRAFT_FOLDER ='DRAFT_FOLDER',
   FOLDER = 'FOLDER', 
   PROJECT = 'PROJECT'
 }
