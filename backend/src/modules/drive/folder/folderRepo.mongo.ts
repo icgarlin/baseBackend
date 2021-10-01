@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import mongoose from 'mongoose'; 
 import { ObjectID } from 'mongodb';
 import { Service } from 'typedi';
@@ -10,6 +14,7 @@ import { IFolderRepo,
          IFolder, 
          IFolderInput, 
          IFolderOptionsInput } from '../interfaces';
+const typesenseClient = require('../../../config/typesense/'); 
 
 @Service()
 class MongoDBFolderRepo implements IFolderRepo {
@@ -138,7 +143,16 @@ class MongoDBFolderRepo implements IFolderRepo {
             const folderExists = await this.doesFolderExist(name,ownerId);
             if (folderExists) throw (new BasicError(ErrorCode.UserInputError,`Duplicate item`)); 
             if (folderExists instanceof BasicError) throw (folderExists); 
-            const folder = await FolderModel.create(input); 
+            const folder = await FolderModel.create(input);
+            
+            const typesenseFolderInput = {
+                id: folder['_id'],
+                ownerId: folder['ownerId'],
+                name: folder['name'],
+                type: folder['type'], 
+                createdAt: folder['createdAt'].toString(),
+            }
+            typesenseClient.collections('files').documents().create(typesenseFolderInput); 
             return folder.toObject() as IFolder; 
         } catch (error) {
             console.log('The error ', error); 

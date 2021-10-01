@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import mongoose from 'mongoose'; 
 import { IFileRepo, 
          IFile, 
@@ -12,8 +16,8 @@ import { ObjectID } from 'mongodb';
 import { IBlobRepo, 
          UpdatedDocument } from '../../__shared__/interfaces';
 import { Service } from 'typedi';
-import { FolderModel } from '../folder/folder.model';
 import BaseRepo from '../../__shared__/baseRepo';
+const typesenseClient = require('../../../config/typesense/'); 
 
 
 @Service()
@@ -93,6 +97,17 @@ class MongoDBFileRepo extends BaseRepo implements IFileRepo {
                                                         deleted: false,
                                                         isPersonal: true
                                                     })
+
+
+              const typesenseFileInput = {
+                  id: newFile['_id'],
+                  ownerId: newFile['ownerId'],
+                  name: newFile['name'],
+                  type: newFile['type'], 
+                  size: newFile['size'],
+                  createdAt: newFile['createdAt'].toString(),
+              }
+              typesenseClient.collections('files').documents().create(typesenseFileInput); 
               return newFile.toObject() as IFile;  
         } catch (error) {
               if (error instanceof mongoose.Error.ValidationError) {

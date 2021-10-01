@@ -129,7 +129,6 @@ class AdminRepo implements IAdminRepo {
               return (new BasicError(ErrorCode.BadRequest,`Invalid email`)); 
             }
           }
-          return error as BasicError; 
       }
     }
 

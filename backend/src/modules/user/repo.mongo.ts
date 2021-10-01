@@ -182,16 +182,17 @@ register = async (info: IRegistration, comparePassword: (password: string, hashe
        if (userExistsRes instanceof Error) throw (userExistsRes); 
        if (!userExistsRes) {
           const hashPass = await this.hashPassword(password);
-
+          const stripeCustomerId = process.env.NODE_ENV === 'production' ? 
+                                   await createCustomer(name,email) : 
+                                   null
+          if (stripeCustomerId instanceof Error) throw (stripeCustomerId); 
           const newUser = await UserModel.create({
                                                    username,
                                                    name, 
                                                    password: hashPass,
                                                    email, 
                                                    avatar: ``,
-                                                   stripeCustomerId: process.env.NODE_ENV === 'production' ? 
-                                                                    await createCustomer(name,email) : 
-                                                                    null
+                                                   stripeCustomerId
                                                  });
           await newUser.save();
           return await this.login(username,
