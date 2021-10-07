@@ -8,8 +8,7 @@ import { NotificationOrErrorUnion,
          UserOrErrorUnion} from '../__shared__/types.resolver';
 import { EditInfoInput, 
          Registration } from './input.resolve';
-import { LoginOrErrorUnion, 
-         ProfileInfoOrErrorUnion } from './types.resolve';
+import { LoginOrErrorUnion } from './types.resolve';
 import { Service } from 'typedi';
 import { UserController } from './controller';
 import { GenericError } from '../__shared__/schema';
@@ -28,8 +27,7 @@ import { Arg,
          Subscription,
          Root} from 'type-graphql';
 import { NOTIFICATIONS } from '../__shared__/notification/interface';
-import { NotificationInput,
-         Notification } from '../__shared__/notification/schema'; 
+import { Notification } from '../__shared__/notification/schema'; 
 import { Context } from '../__shared__/interfaces';
 import MongoDBNotificationRepo from '../__shared__/notification/mongo.repo';
 
@@ -117,8 +115,11 @@ export class UserResolver {
   @Mutation(() => LoginOrErrorUnion)
   async register(
     @Arg('registration', () => Registration, {nullable: false}) registration: Registration,
+    @Ctx() context: Context
   ): Promise<typeof LoginOrErrorUnion> {
     try {
+      console.log('hc ', context); 
+      console.log('input ', registration); 
       const registerRes = await this.userControl.register(registration);
       if ('code' in registerRes || registerRes instanceof Error) throw (registerRes);
       const { user, accessToken } = registerRes; 
@@ -131,6 +132,7 @@ export class UserResolver {
       }
       return register; 
     } catch (error) {
+        console.log('the error ', error); 
         if (error instanceof BasicError) {
           const { code, message } = error as GenericError; 
           return {
@@ -141,46 +143,6 @@ export class UserResolver {
           }
         }
         return error as GenericError; 
-    }
-  }
-
-   @Mutation(() => SuccessOrErrorUnion)
-   async followUser(
-     @Arg('followUserId', () => String) followUserId: string,
-     @Ctx() context: Context,
-     @PubSub(NOTIFICATIONS.FOLLOW) followSubscription: Publisher<NotificationInput>
-   ): Promise<typeof SuccessOrErrorUnion> {
-     try {
-        const { user } = context; 
-        const { _id } = user; 
-        const response = await this.userControl.follow(_id,followUserId);  
-        if (response instanceof Error) throw (response); 
-        const notif = await this.userControl.notification.createNotification(_id,
-                                                                            [followUserId],
-                                                                            NOTIFICATIONS.FOLLOW);
-        if (notif instanceof Error) throw (notif); 
-        await followSubscription(notif); 
-        return response; 
-     } catch(error) {
-        return error as GenericError; 
-     }
-   }
-
-   @Mutation(() => SuccessOrErrorUnion)
-   async unfollowUser(
-     @Arg('unfollowUserId', () => String) unfollowUserId: string,
-     @Ctx() context: Context,
-   ): Promise<typeof SuccessOrErrorUnion> {
-     try {
-      const { user } = context; 
-      const { _id } = user; 
-      const response = await this.userControl.unfollow(_id,unfollowUserId);  
-      if (response instanceof Error) throw (response);
-      const userRes = await this.userControl.getUser(_id); 
-      if (userRes instanceof Error) throw (userRes);  
-      return response; 
-    } catch(error) {
-        return error as GenericError;
     }
   }
   

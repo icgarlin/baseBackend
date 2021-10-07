@@ -10,8 +10,6 @@ import { ServerResolver as serverResolver } from '../../modules/server/resolver'
 import TApolloServer from './server';
 import SchemaBuilder from './schema';
 import Container from 'typedi';
-import ServerAPI from '../../modules/server/api';
-import DirectMessageAPI from '../../modules/dm/api';
 import app from '../../app';
 import { pubSub } from '../redis';
 import { authChecker } from '../auth';

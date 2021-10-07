@@ -39,6 +39,7 @@ class TApolloServer {
     build = (): ApolloServer | BasicError => {
         try {
             const server =  new ApolloServer({
+                                      debug: true, 
                                       schema: this.schema,
                                       engine: {
                                          apiKey: this.apiKey
@@ -57,14 +58,12 @@ class TApolloServer {
                                             } else if (req) {
                                                 const token = req.headers.authorization || '';
                                                 const ctx = await createContext(token);
+                                                console.log('the contx ', ctx); 
                                                 return ctx; 
                                             }
                                           } catch (error) {
                                               console.log('Error building context ', error);
                                           }
-                                      },
-                                      dataSources: () => {
-                                        return this.restSources
                                       },
                                       uploads: false
                                    })
@@ -72,6 +71,7 @@ class TApolloServer {
             return server; 
 
         } catch (error) {
+            console.log('the errro' ,error); 
             return error as BasicError; 
         }
     }

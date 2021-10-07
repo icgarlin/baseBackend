@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// require('@babel/register'); 
 import { Client } from 'typesense'; 
 
 
@@ -31,24 +30,37 @@ let foldersSchema = {
 }
 
 
-export const typesenseClient = new Client({
-    'nodes': [{
-        'host': 'localhost', // For Typesense Cloud use xxx.a1.typesense.net
-        'port': '8108',      // For Typesense Cloud use 443
-        'protocol': 'http'   // For Typesense Cloud use https
-      }],
-      'apiKey': '<API_KEY>',
-      'connectionTimeoutSeconds': ''
-});
+
+// const createTypesenseClient = () => {
+//     try { 
+//         const typesenseClient = new Client({
+//             'nodes': [{
+//                 'host': 'localhost', // For Typesense Cloud use xxx.a1.typesense.net
+//                 'port': '8108',      // For Typesense Cloud use 443
+//                 'protocol': 'http'   // For Typesense Cloud use https
+//             }],
+//             'apiKey': '<API_KEY>',
+//             'connectionTimeoutSeconds': ''
+//         })
+
+//         typesenseClient.collections().create(filesSchema)
+//         .then(function (data) {
+//         console.log(data)
+//         });
+
+//         typesenseClient.collections().create(foldersSchema)
+//         .then(function (data) {
+//             console.log(data)
+//         });
+
+//         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+//         return typesenseClient; 
+//     } catch (error) {
+//         console.log('the error ')
+//     }
+// } 
 
 
 
-typesenseClient.collections().create(filesSchema)
-  .then(function (data) {
-    console.log(data)
-});
+// export default createTypesenseClient(); 
 
-typesenseClient.collections().create(foldersSchema)
-  .then(function (data) {
-    console.log(data)
-});

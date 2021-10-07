@@ -1,12 +1,12 @@
-import dmRoutes from '../modules/dm/dm.router';
-import serverRoutes from '../modules/server/server.router';
 import express, { Request, Response } from 'express';
 import sslRedirect from 'heroku-ssl-redirect';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import cors from 'cors';
+import helmet from 'helmet'; 
 import stripeWebhook from '../config/stripe';
+import compression from 'compression'; 
 const app = express();
 
 
@@ -16,12 +16,12 @@ const corsOptions = {
    credentials: false
 }
 
+app.use(compression()); 
+app.use(helmet());
 app.post(`/stripe-webhook`, bodyParser.raw({type: 'application/json'}), stripeWebhook)
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(express.json({limit: '50mb'}));
-app.use(`/dm`, dmRoutes);
-app.use(`/server`, serverRoutes);
-app.use('/static', express.static('public'))
+// app.use('/static', express.static('public'))
 app.use(cors(corsOptions));
 
 
@@ -74,10 +74,13 @@ if (process.env.NODE_ENV === 'production') {
     }
   });
 } else {
+  app.use(express.static(path.join(__dirname, '../../../../rainbaseWebFull/Rainbase/baseApp/frontend/public')));
   // app.use(express.static(path.join(__dirname, '../../../frontend/public')));
   app.get('/*', function (req: Request, res: Response) {
     // res.sendFile(path.join(__dirname, '../../../frontend/public/index.html'));
-    res.sendFile(path.join(__dirname, 'index.html'));
+    // console.log('the req ', req); 
+    res.sendFile(path.join(__dirname, '../../../../rainbaseWebFull/Rainbase/baseApp/frontend/public/index.html'));
+
   });
 }
 

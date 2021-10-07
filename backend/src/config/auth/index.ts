@@ -8,7 +8,9 @@ export const authChecker: AuthChecker<Context> = (
   { context, args }: ResolverData<Context>,
   roles,
 ): boolean => {
-  const { user } = context; 
+  console.log('the ')
+  const { user } = context;
+  console.log('our') 
   if (roles.length === 0) {
     // if `@Authorized()`, check only if user exists
     return user !== undefined;

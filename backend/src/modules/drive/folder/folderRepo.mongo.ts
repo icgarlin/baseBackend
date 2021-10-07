@@ -14,7 +14,7 @@ import { IFolderRepo,
          IFolder, 
          IFolderInput, 
          IFolderOptionsInput } from '../interfaces';
-import { typesenseClient } from '../../../config/typesense/index.js'; 
+// import typesenseClient from '../../../config/typesense/index.js'; 
 
 @Service()
 class MongoDBFolderRepo implements IFolderRepo {
@@ -145,14 +145,14 @@ class MongoDBFolderRepo implements IFolderRepo {
             if (folderExists instanceof BasicError) throw (folderExists); 
             const folder = await FolderModel.create(input);
             
-            const typesenseFolderInput = {
-                id: folder['_id'],
-                ownerId: folder['ownerId'],
-                name: folder['name'],
-                type: folder['type'], 
-                createdAt: folder['createdAt'].toString(),
-            }
-            typesenseClient.collections('files').documents().create(typesenseFolderInput); 
+            // const typesenseFolderInput = {
+            //     id: folder['_id'],
+            //     ownerId: folder['ownerId'],
+            //     name: folder['name'],
+            //     type: folder['type'], 
+            //     createdAt: folder['createdAt'].toString(),
+            // }
+            // typesenseClient.collections('files').documents().create(typesenseFolderInput); 
             return folder.toObject() as IFolder; 
         } catch (error) {
             console.log('The error ', error); 

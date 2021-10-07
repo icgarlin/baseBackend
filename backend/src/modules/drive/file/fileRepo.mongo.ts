@@ -17,7 +17,7 @@ import { IBlobRepo,
          UpdatedDocument } from '../../__shared__/interfaces';
 import { Service } from 'typedi';
 import BaseRepo from '../../__shared__/baseRepo';
-import { typesenseClient } from '../../../config/typesense/index.js'; 
+// import typesenseClient from '../../../config/typesense/index.js'; 
 
 
 @Service()
@@ -105,15 +105,15 @@ class MongoDBFileRepo extends BaseRepo implements IFileRepo {
                                                     })
 
 
-              const typesenseFileInput = {
-                  id: newFile['_id'],
-                  ownerId: newFile['ownerId'],
-                  name: newFile['name'],
-                  type: newFile['type'], 
-                  size: newFile['size'],
-                  createdAt: newFile['createdAt'].toString(),
-              }
-              typesenseClient.collections('files').documents().create(typesenseFileInput); 
+            //   const typesenseFileInput = {
+            //       id: newFile['_id'],
+            //       ownerId: newFile['ownerId'],
+            //       name: newFile['name'],
+            //       type: newFile['type'], 
+            //       size: newFile['size'],
+            //       createdAt: newFile['createdAt'].toString(),
+            //   }
+            //   typesenseClient.collections('files').documents().create(typesenseFileInput); 
               return newFile.toObject() as IFile;  
         } catch (error) {
               if (error instanceof mongoose.Error.ValidationError) {
