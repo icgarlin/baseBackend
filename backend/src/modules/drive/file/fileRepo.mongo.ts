@@ -17,7 +17,7 @@ import { IBlobRepo,
          UpdatedDocument } from '../../__shared__/interfaces';
 import { Service } from 'typedi';
 import BaseRepo from '../../__shared__/baseRepo';
-const typesenseClient = require('../../../config/typesense/'); 
+import { typesenseClient } from '../../../config/typesense/index.js'; 
 
 
 @Service()
@@ -53,20 +53,26 @@ class MongoDBFileRepo extends BaseRepo implements IFileRepo {
     }
 
 
-    createPreSignedUrls = async (userId: string, info: IFileInfo[], blobRepo: IBlobRepo, serverId?: string): Promise<PreSignedInfo> => {
-        const urls: string[] = []; 
-        const keys: string[] = [];
-        await Promise.all(info.map(async (file) => {
-            const { name, type } = file;
-            const presignedInfo: {url: string, key: string} | BasicError = await blobRepo.handleGetPreSignedUrl(name,type,userId,serverId); 
-            if (presignedInfo instanceof Error) throw (presignedInfo); 
-            else {
-                const { url, key } = presignedInfo; 
-                urls.push(url); 
-                keys.push(key);
+    createPreSignedUrls = async (userId: string, info: IFileInfo[], blobRepo: IBlobRepo, serverId?: string): Promise<PreSignedInfo | BasicError> => {
+        try { 
+            const urls: string[] = []; 
+            const keys: string[] = [];
+            await Promise.all(info.map(async (file) => {
+                const { name, type } = file;
+                const presignedInfo: {url: string, key: string} | BasicError = await blobRepo.handleGetPreSignedUrl(name,type,userId,serverId); 
+                if (presignedInfo instanceof Error) throw (presignedInfo); 
+                else {
+                    const { url, key } = presignedInfo; 
+                    urls.push(url); 
+                    keys.push(key);
+                }
+            }));
+            return { urls, keys }; 
+        } catch (error) {
+            if (error instanceof BasicError) {
+                return error; 
             }
-        }));
-        return { urls, keys }; 
+        }
     }
 
     atRoot = async (fileId: string, ownerId: string): Promise<boolean | BasicError>=> {

@@ -14,7 +14,7 @@ import { IFolderRepo,
          IFolder, 
          IFolderInput, 
          IFolderOptionsInput } from '../interfaces';
-const typesenseClient = require('../../../config/typesense/'); 
+import { typesenseClient } from '../../../config/typesense/index.js'; 
 
 @Service()
 class MongoDBFolderRepo implements IFolderRepo {

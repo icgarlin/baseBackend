@@ -1,30 +1,19 @@
 
 import { Arg, 
-         Ctx, 
-         Mutation, 
+         Ctx,
          Query, 
          Resolver, 
-         ID, 
          Int, 
-         Root, 
          Authorized} from 'type-graphql';
 import { Context } from '../__shared__/interfaces';
-import { Folder, 
-         FolderOptionsInput } from './folder/folder.schema';
-import { FileAndFolderListOrErrorUnion, 
-         FileConnectionOrErrorUnion, 
-         FileOrFolderConnectionOrErrorUnion, 
-         FolderConnectionOrErrorUnion, 
-         FolderOrErrorUnion } from './types.resolver';
+import { Folder } from './folder/folder.schema';
+import { FileOrFolderConnectionOrErrorUnion } from './types.resolver';
 import { GenericError } from '../__shared__/schema';
-import { SuccessOrErrorUnion } from '../__shared__/types.resolver';
-import FolderController from './folder/folderController';
 import MongoDBFileRepo from './file/fileRepo.mongo';
 import MongoDBFolderRepo from './folder/folderRepo.mongo';
 import { CloudFrontRepo } from '../__shared__/aws/cloudfront';
 import { S3Repo } from '../__shared__/aws/s3';
 import { Service } from 'typedi';
-import { TFile } from './file/file.schema';
 import DriveController from './controller';
 import { DriveOptions } from './schema';
 

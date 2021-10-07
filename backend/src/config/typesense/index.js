@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-import typesense from 'typesense';
-
+// require('@babel/register'); 
+import { Client } from 'typesense'; 
 
 
 let filesSchema = {
@@ -32,7 +31,7 @@ let foldersSchema = {
 }
 
 
-export const typesenseClient = typesense.Client({
+export const typesenseClient = new Client({
     'nodes': [{
         'host': 'localhost', // For Typesense Cloud use xxx.a1.typesense.net
         'port': '8108',      // For Typesense Cloud use 443
@@ -41,6 +40,7 @@ export const typesenseClient = typesense.Client({
       'apiKey': '<API_KEY>',
       'connectionTimeoutSeconds': ''
 });
+
 
 
 typesenseClient.collections().create(filesSchema)

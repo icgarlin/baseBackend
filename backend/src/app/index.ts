@@ -12,7 +12,7 @@ const app = express();
 
 
 const corsOptions = {
-   origin: (process.env.NODE_ENV === 'production') ? 'https://www.thndr.tv/' : '*',
+   origin: (process.env.NODE_ENV === 'production') ? 'https://www.rainbase.io/' : '*',
    credentials: false
 }
 
@@ -21,7 +21,9 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(express.json({limit: '50mb'}));
 app.use(`/dm`, dmRoutes);
 app.use(`/server`, serverRoutes);
+app.use('/static', express.static('public'))
 app.use(cors(corsOptions));
+
 
 if (process.env.NODE_ENV === 'production') {
   app.use(sslRedirect());
@@ -35,40 +37,47 @@ if (process.env.NODE_ENV === 'production') {
     switch (extension) {
         case '.js':
             res.setHeader('Content-Type', 'text/javascript');
-            res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/static/js' + req.url)));
+            // res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/static/js' + req.url)));
+            res.write(fs.readFileSync(path.join(__dirname, '/static/js' + req.url)));
             res.end();
             break;
         case '.css':
             res.setHeader('Content-Type', 'text/css');
-            res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/static/css' + req.url)));
+            // res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/static/css' + req.url)));
+            res.write(fs.readFileSync(path.join(__dirname, '/static/css' + req.url)));
             res.end();
             break;
         case '.png':
             res.setHeader('Content-Type', 'image/png');
-            res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/static/media' + req.url)));
+            // res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/static/media' + req.url)));
+            res.write(fs.readFileSync(path.join(__dirname, '/static/media' + req.url)));
             res.end();
             break;
         case '.jpg':
             res.setHeader('Content-Type', 'image/jpeg');
-            res.write(fs.readFileSync(path.join(__dirname,'../../../frontend/build/static/media' + req.url)));
+            // res.write(fs.readFileSync(path.join(__dirname,'../../../frontend/build/static/media' + req.url)));
+            res.write(fs.readFileSync(path.join(__dirname, '/static/media' + req.url)));
             res.end();
             break;
         default:
             if (name == 'index.html' || !extension) {
                 res.setHeader('Content-Type', 'text/html');
-                res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/', 'index.html')));
+                // res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/', 'index.html')));
+                res.write(fs.readFileSync(path.join(__dirname, 'index.html')));
                 res.end();
             } else {
                 res.setHeader('Content-Type', 'application/json');
-                res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/', 'manifest.json')));
+                // res.write(fs.readFileSync(path.join(__dirname, '../../../frontend/build/', 'manifest.json')));
+                res.write(fs.readFileSync(path.join(__dirname, 'manifest.json')));
             }
             return;
     }
-});
+  });
 } else {
-  app.use(express.static(path.join(__dirname, '../../../frontend/public')));
+  // app.use(express.static(path.join(__dirname, '../../../frontend/public')));
   app.get('/*', function (req: Request, res: Response) {
-    res.sendFile(path.join(__dirname, '../../../frontend/public/index.html'));
+    // res.sendFile(path.join(__dirname, '../../../frontend/public/index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
   });
 }
 

@@ -36,14 +36,14 @@ export class FileResolver {
    @Query(() => PreSignedInfoOrErrorUnion)
    async getPreSignedUrls(
      @Arg('files', () => [FileInfo], {nullable: false}) files: FileInfo[],
-     @Arg('serverId', () => String) serverId: string,
+     @Arg('serverId', () => String, {nullable: false}) serverId: string,
      @Ctx() context: Context
     ): Promise<typeof PreSignedInfoOrErrorUnion> {
       try {
         const { user } = context; 
         const { _id } = user;
         if (files[0].name === '') return {urls: [], keys: []};
-        if (serverId !== null) {
+        if (serverId !== '') {
             const preSignedInfo = await this.fileControl.createPreSignedUrls(_id,files,serverId); 
             if (preSignedInfo instanceof Error) throw preSignedInfo; 
             return preSignedInfo;
@@ -53,7 +53,6 @@ export class FileResolver {
             return preSignedInfo; 
         }
       } catch (error) {
-            console.log('the errror ', error); 
             return error as GenericError; 
       } 
     }

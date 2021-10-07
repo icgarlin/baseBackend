@@ -28,7 +28,7 @@ export interface IFileRepo extends BaseRepo {
    starFile: (fileId: string, ownerId: string) => Promise<ISuccess | BasicError>; 
    unstarFile: (fileId: string, ownerId: string) => Promise<ISuccess | BasicError>; 
    renameFile: (fileId: string, ownerId: string, name: string) => Promise<ISuccess | BasicError>; 
-   createPreSignedUrls: (userId: string, info: IFileInfo[], blobRepo: IBlobRepo, serverId?: string) => Promise<PreSignedInfo>; 
+   createPreSignedUrls: (userId: string, info: IFileInfo[], blobRepo: IBlobRepo, serverId?: string) => Promise<PreSignedInfo | BasicError>; 
    createFile: (fileInput: IFileInput) => Promise<IFile | BasicError>; 
    getFilesByMatchingPattern: (userId: string, pattern: string) => Promise<IFile[] | BasicError>; 
    searchFiles: (userId: string, pattern: string) => Promise<IFile[] | BasicError>; 

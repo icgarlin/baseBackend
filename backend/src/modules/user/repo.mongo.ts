@@ -203,6 +203,7 @@ register = async (info: IRegistration, comparePassword: (password: string, hashe
                                   createRefreshToken);
        }
    } catch (error) {
+       console.log('our error ', error); 
        if (error instanceof mongoose.Error.ValidationError) {
            return new BasicError(ErrorCode.InternalServerError,error.message)
        } else if (error instanceof mongoose.Error) {
