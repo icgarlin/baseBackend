@@ -29,7 +29,7 @@ const dmControl = new DirectMessageController(dmRepo,userRepo,cloudService);
 const apolloGate = buildApolloServerGateway();
 
 apolloGate.then((gateway) => {
-    if ('code' in gateway || gateway instanceof Error) throw (gateway);
+    if ('code' in gateway) throw (gateway);
     const httpServer = createServer(app); 
     const hS = httpServer.listen({ port: process.env.PORT || 4000 }, () => {
         console.log(`🚀 Server ready at ${gateway.graphqlPath}`)

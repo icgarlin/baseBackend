@@ -57,8 +57,7 @@ class TApolloServer {
                                                 return ctx;
                                             } else if (req) {
                                                 const token = req.headers.authorization || '';
-                                                const ctx = await createContext(token);
-                                                console.log('the contx ', ctx); 
+                                                const ctx = await createContext(token);  
                                                 return ctx; 
                                             }
                                           } catch (error) {

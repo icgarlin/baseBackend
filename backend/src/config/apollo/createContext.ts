@@ -12,10 +12,8 @@ const userControl = new UserController(mongoUserRepo,cloudService,helper);
 
 
 
-export const createContext = async (token: string): Promise<Context> => {
-    console.log('our token ', token);   
+export const createContext = async (token: string): Promise<Context> => { 
     if (!token) {
-      console.log('h')
       return {
         user: null 
       };
@@ -27,7 +25,7 @@ export const createContext = async (token: string): Promise<Context> => {
       const { userId } = decoded; 
       if (userId) {
           const res = await userControl.getUser(userId);  
-          if (res instanceof Error) throw (res);
+          if ('code' in res) throw (res);
           return {user:res};  
       } else return {user:null}; 
     } catch (err) {

@@ -12,18 +12,15 @@ export interface IUserModel extends Document {
   password: string;
   avatar: string;
   cover: string;
-  followingIds: string[];
-  followerIds: string[];
   connections: string[]; 
   roles: string[];
-  bio: string;
-  birth: string;
-  lastLogin: Date | null;
-  statusIds: string[]; 
   refreshToken: string;
   serversJoined: IServerJoined[];
-  directMessages: IDMGroupModel[]; 
-  stripeCustomerId: string; 
+  directMessages: IDMGroupModel[];
+  bio?: string;
+  birth?: Date;
+  lastLogin?: Date; 
+  stripeCustomerId?: string; 
 }
 
 export interface IDMGroupModel extends Document {
@@ -71,21 +68,12 @@ const userSchema = new Schema({
     maxlength: 150,
   },
   birth: {
-    type: String,
+    type: Date,
   },
   avatar: { type: String },
   cover: { type: String },
-  followerIds: [
-    { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  ],
-  followingIds: [
-    { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  ],
   connections: [
     {type: mongoose.Schema.Types.ObjectId, ref: 'User'}
-  ],
-  statusIds: [
-    { type: mongoose.Schema.Types.ObjectId, ref: 'Status' },
   ],
   refreshToken: {
     type: String,
@@ -123,7 +111,7 @@ const userSchema = new Schema({
   },
   stripeCustomerId: {
     type: String,
-    required: true
+    required: false
   }
 });
 

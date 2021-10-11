@@ -8,7 +8,7 @@ import { NotificationOrErrorUnion,
          UserOrErrorUnion} from '../__shared__/types.resolver';
 import { EditInfoInput, 
          Registration } from './input.resolve';
-import { LoginOrErrorUnion } from './types.resolve';
+import { LoginOrErrorUnion, ProfileInfoOrErrorUnion } from './types.resolve';
 import { Service } from 'typedi';
 import { UserController } from './controller';
 import { GenericError } from '../__shared__/schema';
@@ -68,10 +68,10 @@ export class UserResolver {
 
   // FIXME: fix to include getting all server info 
   // or direct message info 
-  @Query(() => UserOrErrorUnion)
+  @Query(() => ProfileInfoOrErrorUnion)
   async getInfo(
     @Arg('username', () => String, {nullable: false}) username: string
-  ): Promise<typeof UserOrErrorUnion> {
+  ): Promise<typeof ProfileInfoOrErrorUnion> {
    try {
         // Function returns error if both userId & username 
         // are undefined/null
@@ -83,6 +83,7 @@ export class UserResolver {
           cloudService: this.cloudFront
         }; 
    } catch (error) {
+    
       return error as GenericError; 
    }
   }
@@ -95,6 +96,7 @@ export class UserResolver {
   ): Promise<typeof LoginOrErrorUnion> {
     try {
        const resp = await this.userControl.login(username,password);
+       console.log('our resp ', resp); 
        if (resp instanceof BasicError) throw (resp); 
        const login: Login = {
          user: {  
@@ -115,13 +117,10 @@ export class UserResolver {
   @Mutation(() => LoginOrErrorUnion)
   async register(
     @Arg('registration', () => Registration, {nullable: false}) registration: Registration,
-    @Ctx() context: Context
   ): Promise<typeof LoginOrErrorUnion> {
     try {
-      console.log('hc ', context); 
-      console.log('input ', registration); 
       const registerRes = await this.userControl.register(registration);
-      if ('code' in registerRes || registerRes instanceof Error) throw (registerRes);
+      if ('code' in registerRes) throw (registerRes);
       const { user, accessToken } = registerRes; 
       const register: Login = { 
         user: {
@@ -132,7 +131,6 @@ export class UserResolver {
       }
       return register; 
     } catch (error) {
-        console.log('the error ', error); 
         if (error instanceof BasicError) {
           const { code, message } = error as GenericError; 
           return {

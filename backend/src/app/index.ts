@@ -74,13 +74,13 @@ if (process.env.NODE_ENV === 'production') {
     }
   });
 } else {
-  app.use(express.static(path.join(__dirname, '../../../../rainbaseWebFull/Rainbase/baseApp/frontend/public')));
+  // app.use(express.static(path.join(__dirname, '../../../../rainbaseWebFull/Rainbase/baseApp/frontend/public')));
   // app.use(express.static(path.join(__dirname, '../../../frontend/public')));
+
   app.get('/*', function (req: Request, res: Response) {
     // res.sendFile(path.join(__dirname, '../../../frontend/public/index.html'));
-    // console.log('the req ', req); 
-    res.sendFile(path.join(__dirname, '../../../../rainbaseWebFull/Rainbase/baseApp/frontend/public/index.html'));
-
+    // res.sendFile(path.join(__dirname, '../../../../rainbaseWebFull/Rainbase/baseApp/frontend/public/index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
   });
 }
 

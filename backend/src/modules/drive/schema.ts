@@ -19,7 +19,7 @@ pageInfo: PageInfo;
 
 @InputType()
 export class DriveOptions { 
-@Field(() => String)  
+@Field(() => String, {nullable: false})  
 parentId: string; 
 @Field(() => Boolean, {nullable: false})
 deleted: boolean; 

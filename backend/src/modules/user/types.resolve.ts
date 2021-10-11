@@ -15,7 +15,7 @@ export const LoginOrErrorUnion = createUnionType({
  
 
 export const ProfileInfoOrErrorUnion = createUnionType({
-    name: "ProfileInfoOrError", 
+    name: 'ProfileInfoOrError', 
     types: () => [ProfileInfo, GenericError] as const, 
     resolveType: value => {
       if ('code' in value) {

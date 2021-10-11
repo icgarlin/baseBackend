@@ -59,17 +59,15 @@ export interface IUser {
   password: IUserModel['password'];
   avatar: IUserModel['avatar'];
   cover: IUserModel['cover'];
-  followingIds: IUserModel['followingIds'];
-  followerIds: IUserModel['followerIds'];
   connections: IUserModel['connections']; 
   roles: IUserModel['roles'];
-  bio: IUserModel['bio'];
-  birth: IUserModel['birth'];
-  lastLogin: IUserModel['lastLogin']; 
   refreshToken: IUserModel['refreshToken'];
   serversJoined: IUserModel['serversJoined'];
   directMessages: IUserModel['directMessages'];
-  stripeCustomerId: IUserModel['stripeCustomerId']; 
+  bio?: IUserModel['bio'];
+  stripeCustomerId?: IUserModel['stripeCustomerId'];
+  birth?: IUserModel['birth'];
+  lastLogin?: IUserModel['lastLogin'];
   cloudService?: ICloudServiceRepo; 
 }
 
@@ -89,9 +87,7 @@ export interface IDOptions {
 export interface IProfileData {
   _id: IUser['_id']; 
   username: IUser['username']; 
-  name: IUser['name']; 
-  followerIds: IUser['followerIds'];
-  followingIds: IUser['followingIds'];
+  name: IUser['name'];
   email: IUser['email']; 
   avatar: IUser['avatar']; 
 }

@@ -5,7 +5,8 @@ import { Arg,
          Query, 
          Resolver, 
          ID, 
-         Int } from 'type-graphql';
+         Int, 
+         Authorized} from 'type-graphql';
 import { Context } from '../../__shared__/interfaces';
 import { Folder, 
     FolderInput, 
@@ -29,7 +30,8 @@ export class FolderResolver {
     constructor (folderRepo: MongoDBFolderRepo) {
         this.folderControl = new FolderController(folderRepo); 
     }
-    
+   
+    @Authorized()
     @Mutation(() => FolderOrErrorUnion, {nullable: false})
     async createFolder(
         @Arg('folderInput', () => FolderInput, {nullable: false}) folderInput: FolderInput,

@@ -1,22 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ICloudServiceRepo, 
-    UpdatedDocument } from '../__shared__/interfaces';
+         UpdatedDocument } from '../__shared__/interfaces';
 import { IAccountHelper, 
-    ILogin,
-    ILoginCredentials, 
-    IProfileData,
-    IRegistration, 
-    IServerJoined, 
-    IUser, 
-    IUserRepo } from './interfaces';
+         ILogin,
+         ILoginCredentials, 
+         IProfileData,
+         IRegistration, 
+         IServerJoined, 
+         IUser, 
+         IUserRepo } from './interfaces';
 import { UserModel } from './user.model';
 import { BasicError, 
-    ErrorCode, 
-    ISuccess } from '../__shared__/error';
+         ErrorCode, 
+         handleMongoError, 
+         ISuccess } from '../__shared__/error';
 import bcrypt from 'bcryptjs'; 
 import { Service } from 'typedi';
 import { ISubscriptionInfo } from '../__shared__/admin/interface';
 import Stripe from 'stripe'; 
 import mongoose from 'mongoose'; 
+
 
 @Service()
 class MongoDBUserRepo implements IUserRepo {
@@ -40,27 +43,25 @@ private hashPassword = async (password: string): Promise<string | BasicError> =>
 
 checkLoginCredentialsValid = async (username: string, password: string, comparePassword: (password: string, hashedPassword: string) => Promise<boolean | BasicError>): Promise<ILoginCredentials | BasicError> => {
    try { 
-       if (username === '' || password === '') throw (new BasicError(ErrorCode.UserInputError));
+       if (username === '' || password === '') throw (new BasicError(ErrorCode.UserInputError, `Incorrect login credentials`));
        const user = await this.findUserByUsername(username); 
-       if (user instanceof BasicError) throw (user); 
+       if ('code' in user) throw (user); 
        const isMatch = await comparePassword(password,user.password); 
-       if (isMatch instanceof Error) throw (isMatch); 
+       if (isMatch instanceof BasicError) throw (isMatch); 
        /* Old users do not have hashed password */ 
-       if (!isMatch && password != user.password) throw (new BasicError); 
+       if (!isMatch && password != user.password) throw (new BasicError(ErrorCode.UserInputError,`Wrong password`)); 
        /*****************************************/
        if (isMatch) return {isMatch: true, user};
        else return {isMatch: false, user: null}; 
        
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof Stripe.StripeError) {
-           return new BasicError(ErrorCode.BadRequest,error.type); 
-       } else if (error instanceof BasicError) {
-           return error
-       }
+        console.log('our error in check ', error);
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } else if (error instanceof BasicError) {
+            return error; 
+        } 
+  
    }
 }
 
@@ -72,15 +73,10 @@ createAndUpdateRefreshToken = async (userId: string, createRefreshToken: (userId
        if (updated instanceof BasicError) throw (updated);
        return refreshToken; 
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof Stripe.StripeError) {
-           return new BasicError(ErrorCode.BadRequest,error.type); 
-       } else if (error instanceof BasicError) {
-           return error
-       }
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+    
    }
 }
 
@@ -98,15 +94,10 @@ doesUserExist = async (username: string, email: string): Promise<false | BasicEr
        else if (user.username === username) throw (new BasicError(ErrorCode.UserInputError,'A user with that username already exists'));
        else throw (new BasicError(ErrorCode.BadRequest)); 
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof BasicError) {
-           return error
-       } else if (error instanceof Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+    
    }
 }
 
@@ -123,22 +114,17 @@ updateLastLogin = async (userId: string): Promise<Date | BasicError> => {
        if (updated.nModified === 1) return loginTime; 
        else throw (new BasicError()); 
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof BasicError) {
-           return error
-       } else if (error instanceof Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } 
+    if (error['name'] === 'MongoError') {
+        return handleMongoError(error); 
+    } 
+  
    }
 }
 
 login = async (username: string, password: string, registration: boolean, comparePassword: (password: string, hashedPassword: string) => Promise<boolean | BasicError>, createAccessToken: (userId: string) => string | BasicError, createRefreshToken: (userId: string) => string | BasicError): Promise<ILogin | BasicError> => {
    try {
        const isValid = await this.checkLoginCredentialsValid(username,password,comparePassword);
-       if (isValid instanceof Error) throw (isValid);
+       if (isValid instanceof BasicError) throw (isValid);
        const { isMatch, user } = isValid; 
        if (!isMatch) throw (new BasicError(ErrorCode.UserInputError, `Incorrect password`));
 
@@ -148,13 +134,13 @@ login = async (username: string, password: string, registration: boolean, compar
        let loginTime: Date; 
        if (!registration) {
          const lastLoginUpdated = await this.updateLastLogin(user._id); 
-         if ('code' in lastLoginUpdated || lastLoginUpdated instanceof Error) throw (lastLoginUpdated);
+         if ('code' in lastLoginUpdated) throw (lastLoginUpdated);
          loginTime = lastLoginUpdated; 
        }
 
        if (typeof refreshToken === 'string') {
           const accessToken = createAccessToken(user._id);
-          if (accessToken instanceof Error) throw (accessToken);
+          if (accessToken instanceof BasicError) throw (accessToken);
           if (user.refreshToken === undefined) user.refreshToken = refreshToken; 
           if (loginTime !== undefined && !registration) user.lastLogin = loginTime; 
           return {
@@ -163,56 +149,47 @@ login = async (username: string, password: string, registration: boolean, compar
           }
        }
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof BasicError) {
-           return error
-       } else if (error instanceof Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       }
+       console.log('login error ', error); 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } else if (error instanceof BasicError) {
+            return error; 
+        }
+   
    }
 }
 
 register = async (info: IRegistration, comparePassword: (password: string, hashedPassword: string) => Promise<boolean | BasicError>, createAccessToken: (userId: string) => string | BasicError, createRefreshToken: (userId: string) => string | BasicError,  createCustomer: (name: string, email: string) => Promise<string | BasicError>): Promise<ILogin | BasicError> => {
    try {
        const { username, name, email, password } = info; 
-       const userExistsRes = await this.doesUserExist(username,email);
-       if (userExistsRes instanceof Error) throw (userExistsRes); 
-       if (!userExistsRes) {
-          const hashPass = await this.hashPassword(password);
-          const stripeCustomerId = process.env.NODE_ENV === 'production' ? 
-                                   await createCustomer(name,email) : 
-                                   null
-          if (stripeCustomerId instanceof Error) throw (stripeCustomerId); 
-          const newUser = await UserModel.create({
-                                                   username,
-                                                   name, 
-                                                   password: hashPass,
-                                                   email, 
-                                                   avatar: ``,
-                                                   stripeCustomerId
-                                                 });
-          await newUser.save();
-          return await this.login(username,
-                                  password,
-                                  true,
-                                  comparePassword,
-                                  createAccessToken,
-                                  createRefreshToken);
-       }
+
+       const hashPass = await this.hashPassword(password);
+       const stripeCustomerId = process.env.NODE_ENV === 'production' ? 
+                            await createCustomer(name,email) : 
+                            ''
+       if (stripeCustomerId instanceof Error) throw (stripeCustomerId); 
+       const newUser = await UserModel.create({
+                                                username,
+                                                name, 
+                                                password: hashPass,
+                                                email, 
+                                                avatar: ``,
+                                                stripeCustomerId
+                                              });
+        const { username: newUsername } = newUser; 
+        return await this.login(
+                                newUsername,
+                                password,
+                                true,
+                                comparePassword,
+                                createAccessToken,
+                                createRefreshToken);
+       
    } catch (error) {
-       console.log('our error ', error); 
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof Stripe.StripeError) {
-           return new BasicError(ErrorCode.BadRequest,error.type); 
-       } else if (error instanceof BasicError) {
-           return error
-       }
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+      
      
    }
 }
@@ -224,34 +201,27 @@ findUser = async (userId: string): Promise<IUser | BasicError> => {
        const user = (resp.toObject() as unknown); 
        return user as IUser; 
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof Stripe.StripeError) {
-           return new BasicError(ErrorCode.BadRequest,error.type); 
-       } else if (error instanceof BasicError) {
-           return error
-       } 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } else if (error instanceof BasicError) {
+            return error; 
+        }
    }
 }
 
 findUserByUsername = async (username: string): Promise<IUser | BasicError> => {
    try {
+       console.log('the username ', username); 
        const resp = await UserModel.findOne({username}); 
-       if (!resp) throw (new BasicError(ErrorCode.NotFound));
+       if (!resp) throw (new BasicError(ErrorCode.NotFound,`Could not find user`));
        const user = (resp.toObject() as unknown); 
        return user as IUser; 
    } catch (error) {
-       if (error instanceof mongoose.Error.ValidationError) {
-           return new BasicError(ErrorCode.InternalServerError,error.message)
-       } else if (error instanceof mongoose.Error) {
-           return new BasicError(ErrorCode.BadRequest,error.message); 
-       } else if (error instanceof Stripe.StripeError) {
-           return new BasicError(ErrorCode.BadRequest,error.type); 
-       } else if (error instanceof BasicError) {
-           return error
-       }
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } else if (error instanceof BasicError) {
+            return error; 
+        }
    }
 }
 
@@ -260,12 +230,12 @@ getProfileInfo = async (username: string): Promise<IProfileData | BasicError> =>
        const user = await UserModel.findOne({username});
        if (!user || user === undefined) throw (new BasicError(ErrorCode.NotFound));
        const { _id, name,
-               followingIds, followerIds, 
                email, avatar } = user; 
        return {
-               _id, username,
-               name, followingIds,
-               email, followerIds,
+               _id, 
+               username,
+               name, 
+               email, 
                avatar
               }
       
@@ -283,7 +253,10 @@ updateAvatar = async (userId: string, avatar: string): Promise<UpdatedDocument |
                    }) as UpdatedDocument; 
    return updated; 
  } catch (error) {
-      return error as BasicError; 
+    if (error['name'] === 'MongoError') {
+        return handleMongoError(error); 
+    } 
+  
  }
 }
 
@@ -296,7 +269,10 @@ updateCover = async (userId: string, cover: string): Promise<UpdatedDocument | B
                        }) as UpdatedDocument; 
        return updated; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+  
    }
 }
 
@@ -309,7 +285,10 @@ updateDisplayName = async (userId: string, name: string): Promise<UpdatedDocumen
                        }) as UpdatedDocument; 
        return updated; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+  
    }
 }
 
@@ -322,7 +301,10 @@ updateEmail = async (userId: string, email: string): Promise<UpdatedDocument | B
                          }) as UpdatedDocument; 
    return updated; 
  } catch (error) {
-       return error as BasicError; 
+    if (error['name'] === 'MongoError') {
+        return handleMongoError(error); 
+    } 
+  
  }
 }
 
@@ -337,7 +319,10 @@ updatePassword = async (userId: string, password: string): Promise<UpdatedDocume
                        }) as UpdatedDocument; 
        return updated; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+  
    }
 }
 
@@ -350,7 +335,10 @@ updateRefreshToken = async (userId: string, token: string): Promise<UpdatedDocum
                                                                }) as UpdatedDocument; 
        return updated; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+  
    }
 }  
 
@@ -364,6 +352,9 @@ getAvatarUrl = async (userId: string): Promise<string | BasicError> => {
        const res = this.cloudService.getUrl(avatarKey);
        return res; 
    } catch (error) {
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
        if (error instanceof BasicError) {
            if (error.code === ErrorCode.NotFound) {
                error.message = `Could not find user`;
@@ -462,7 +453,10 @@ removeServerId = async (serverId: string, userId: string): Promise<ISuccess | Ba
        if (updated.nModified === 1) return {success: true};
        else throw (new BasicError());
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+  
    }
 }
 
@@ -473,7 +467,9 @@ getUserServers = async (userId: string): Promise<IServerJoined[] | BasicError> =
        if (response && response.serversJoined !== undefined && response.serversJoined.length > 0) return response.toObject().serversJoined; 
        return []; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        }
    }
 }
 
@@ -498,7 +494,10 @@ getServerMembers = async (serverId: string): Promise<{ids: string[]} | BasicErro
        }
 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+  
    }
 }
 
@@ -510,7 +509,9 @@ updateStripeCustomerId = async (userId: string, customerId: string): Promise<ISu
        if (res.nModified !== 1) throw (new BasicError()); 
        return {success:true}; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
 
@@ -529,7 +530,10 @@ addSubscriptionInfo = async (userId: string, serverId: string, info: ISubscripti
        if (res.nModified === 1) return {success:true};
        else throw (new BasicError(ErrorCode.BadRequest, `Could not update users server ${serverId} with subscrition info`)); 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+    
    }
 }
 
@@ -558,7 +562,9 @@ updateSubscriptionId = async (userId: string, serverId: string, subscriptionId: 
        if (res.nModified === 1) return {success:true};
        else throw (new BasicError(ErrorCode.BadRequest, `Could not update users server ${serverId} with subscriptionId ${subscriptionId}`)); 
    } catch (error) {
-       return error as BasicError;  
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
 
@@ -573,7 +579,9 @@ updateSubscriptionProductId = async (userId: string, serverId: string, productId
        if (res.nModified === 1) return {success:true};
        else throw (new BasicError(ErrorCode.BadRequest, `Could not update users server ${serverId} with subscriptionId ${productId}`)); 
    } catch (error) {
-       return error as BasicError;   
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
 
@@ -587,8 +595,9 @@ updateSubscriptionStatusByProductId = async (customerId: string, productId: stri
        console.log('our res ', res); 
        if (res.nModified === 1) return {success:true};
    } catch (error) {
-       console.log('there has been an error ', )
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 } 
 
@@ -604,7 +613,9 @@ removeSubscriptionInfo = async (customerId: string, productId: string): Promise<
        if (res.nModified === 1) return {success: true}; 
        else throw (new BasicError(ErrorCode.MongoDBError,`Could not remove product ${productId} subscription info`)); 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
 
@@ -620,7 +631,9 @@ getSubscriptionIdFromOwner = async (userId: string, serverId: string): Promise<s
          } else throw (new BasicError(ErrorCode.BadRequest, `No subscription on this server`))
        } else throw (new BasicError(ErrorCode.NotFound,`Could not find user`)); 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
 
@@ -635,7 +648,9 @@ addToConnected = async (userId: string, connectId: string): Promise<ISuccess | B
       if (res.nModified !== 1) throw (new BasicError(ErrorCode.BadRequest,`Could not add to user connected`)); 
       return {success:true}; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
 
@@ -650,10 +665,11 @@ removeFromConnected = async (userId: string, connectId: string): Promise<ISucces
       if (res.nModified !== 1) throw (new BasicError(ErrorCode.BadRequest,`Could not remove from user connected`)); 
       return {success:true}; 
    } catch (error) {
-       return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
    }
 }
-
 
 getConnections = async (userId: string): Promise<IUser[] | BasicError> => {
    try {
@@ -675,13 +691,17 @@ getConnections = async (userId: string): Promise<IUser[] | BasicError> => {
        return error as BasicError; 
    }
 } 
+
 isConnection = async (userId: string, connectId: string): Promise<boolean | BasicError> => {
     try {
         const user = await this.findUser(userId); 
         if (user instanceof Error) throw (user); 
         return user.connections.includes(connectId); 
     } catch (error) {
-        return error as BasicError; 
+        if (error['name'] === 'MongoError') {
+            return handleMongoError(error); 
+        } 
+      
     }
 }
 }

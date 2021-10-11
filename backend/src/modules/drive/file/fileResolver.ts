@@ -5,7 +5,8 @@ import { Arg,
          Mutation, 
          Query, 
          ID, 
-         Root } from 'type-graphql';
+         Root, 
+         Authorized} from 'type-graphql';
 import { Service } from 'typedi';
 import { CloudFrontRepo } from '../../__shared__/aws/cloudfront';
 import { S3Repo } from '../../__shared__/aws/s3';
@@ -31,8 +32,8 @@ export class FileResolver {
      this.fileControl = new FileController(mongoFileRepo,s3BlobRepo,cloudFront);
    }
 
-   // TEST: 
-   // must induce error to confirm function returns the proper type-graphql shape 
+ 
+   @Authorized()
    @Query(() => PreSignedInfoOrErrorUnion)
    async getPreSignedUrls(
      @Arg('files', () => [FileInfo], {nullable: false}) files: FileInfo[],
@@ -45,11 +46,11 @@ export class FileResolver {
         if (files[0].name === '') return {urls: [], keys: []};
         if (serverId !== '') {
             const preSignedInfo = await this.fileControl.createPreSignedUrls(_id,files,serverId); 
-            if (preSignedInfo instanceof Error) throw preSignedInfo; 
+            if ('code' in preSignedInfo) throw preSignedInfo; 
             return preSignedInfo;
         } else {
             const preSignedInfo = await this.fileControl.createPreSignedUrls(_id,files); 
-            if (preSignedInfo instanceof Error) throw preSignedInfo; 
+            if ('code' in preSignedInfo) throw preSignedInfo; 
             return preSignedInfo; 
         }
       } catch (error) {

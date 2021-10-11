@@ -58,7 +58,7 @@ const stripeWebhook = async (req: Request, res: Response): Promise<Response<any>
      const productId: string = lines.data[0].price.product; 
      if (productId !== '') {
       const response = await adminControl.updateSubscriptionStatusByProductId(customer,productId,status); 
-      if (response instanceof Error) throw (response); 
+      if ('code' in response) throw (response); 
      } 
     }
     switch (event.type) {

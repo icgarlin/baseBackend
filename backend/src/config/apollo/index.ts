@@ -35,7 +35,7 @@ export const buildApolloServerGateway = async (): Promise<ApolloServer | BasicEr
                                               
                                             })
     const schema = await schemaBuilder.build();
-    if ('code' in schema || schema instanceof Error) throw (schema);
+    if ('code' in schema) throw (schema);
     const apolloServerBuilder = new TApolloServer({
                                                     apiKey: process.env.APOLLO_KEY,
                                                     schema,
