@@ -202,12 +202,10 @@ class FolderController extends FileController {
                 }   
             } else {
                 let files: IFile[] | BasicError; 
-                const { starred, deleted } = folderOptionsInput; 
+                const { deleted } = folderOptionsInput; 
                 if (deleted !== undefined && deleted) {
                     files = await this.fileRepo.getRecentlyDeleted(userId,limit,cursor); 
-                } else if (starred !== undefined && starred) {
-                    files = await this.getStarredFiles(userId,limit,cursor); 
-                }
+                } 
                 if (files instanceof BasicError) throw (files); 
                 const hasNextPage = files.length > limit;
                 const edges = hasNextPage ? files.slice(0, -1) : files;

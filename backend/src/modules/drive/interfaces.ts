@@ -7,7 +7,7 @@ import { FileUrlOrErrorUnion } from './types.resolver';
 import { BasicError, 
          ISuccess } from '../__shared__/error';
 import { TFile } from './file/file.schema';
-import { IFolderModel } from './folder/folder.model';
+import { FolderType, IFolderModel } from './folder/folder.model';
 import BaseRepo from '../__shared__/baseRepo';
 
 export interface IFileRepo extends BaseRepo { 
@@ -78,14 +78,15 @@ export interface IFile {
 export interface IFolder {
    _id: IFolderModel['_id']; 
    name: IFolderModel['name']; 
-   parentId: IFolderModel['parentId']; 
    type: IFolderModel['type']; 
    ownerId: IFolderModel['ownerId']; 
    isPersonal: IFolderModel['isPersonal'];
    deleted: IFolderModel['deleted']; 
-   position: IFolderModel['position']; 
+   starred: IFolderModel['starred']; 
    createdAt: IFolderModel['createdAt']; 
    updatedAt: IFolderModel['updatedAt'];
+   parentId?: IFolderModel['parentId']; 
+   fileId?: IFolderModel['fileId']; 
 }
 
 export interface IFileModel extends Document { 
@@ -135,13 +136,13 @@ export interface IFileInput {
 }
 
 export interface IFolderInput {
-   parentId: string | null; 
-   ownerId: string; 
-   isPersonal: boolean;
-   name: string; 
-   starred: boolean; 
-   deleted: boolean;
-   fileId?: string; 
+   parentId: IFolder['parentId']; 
+   ownerId: IFolder['ownerId']; 
+   isPersonal: IFolder['isPersonal'];
+   name: IFolder['name']; 
+   deleted: IFolder['deleted'];
+   type: IFolder['type']; 
+   fileId?: IFolder['fileId']; 
 }
 
 export interface PreSignedInfo {

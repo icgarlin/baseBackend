@@ -95,12 +95,10 @@ export class UserResolver {
     // @Root() user: User,
   ): Promise<typeof LoginOrErrorUnion> {
     try {
-       const resp = await this.userControl.login(username,password);
-       console.log('our resp ', resp); 
+       const resp = await this.userControl.login(username,password); 
        if (resp instanceof BasicError) throw (resp); 
        const login: Login = {
          user: {  
-             // ...user,
              ...resp.user,
              cloudService: this.cloudFront
          },

@@ -8,14 +8,13 @@ export interface IFolderModel extends Document {
     name: string; 
     deleted: boolean; 
     starred: boolean; 
-    parentId: string | null; 
     ownerId: string; 
     type: FolderType; 
     isPersonal: boolean;
     createdAt: Date; 
     updatedAt: Date;
-    position:  number; 
-    fileOriginId?: string; 
+    parentId?: string;  
+    fileId?: string; 
 }
 
 export enum FolderType { 
@@ -31,8 +30,9 @@ const folderSchema = new mongoose.Schema({
     required: [true, 'The filename is required'],
   },
   parentId: {
-    type: String,
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Folder',
+    required: false,
   },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -40,7 +40,8 @@ const folderSchema = new mongoose.Schema({
     required: [true, 'Owner id is required'], 
   },
   type: {
-    type: FolderType,
+    type: String,
+    enum: ['PROJECT', 'FOLDER', 'DRAFT', 'DRAFT_FOLDER'], 
     required: true
   },
   starred: {

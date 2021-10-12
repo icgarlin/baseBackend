@@ -38,10 +38,8 @@ export class Folder {
    createdAt: Date; 
    @Field(() => String, {nullable: false})
    name: string;  
-   @Field(() => FolderType, {nullable: false})
-   type: FolderType; 
-   @Field(() => ID) 
-   parentId: string; 
+   @Field(() => String, {nullable: false})
+   type: string; 
    @Field(() => ID, {nullable: false})
    ownerId: string;
    @Field(() => Date, {nullable: false})
@@ -49,9 +47,11 @@ export class Folder {
    @Field(() => Boolean, {nullable: false})
    deleted: boolean; 
    @Field(() => Boolean, {nullable: false})
-   isPersonal: boolean; 
-   @Field(() => String, {nullable: false})
-   fileOriginId?: string; 
+   isPersonal: boolean;
+   @Field(() => ID) 
+   parentId?: string;  
+   @Field(() => String)
+   fileId?: string; 
 }
 
 @ObjectType()
@@ -75,11 +75,11 @@ export class FolderInput {
    @Field(() => Boolean, {nullable: false}) 
    isPersonal: boolean; 
    @Field(() => ID, {nullable: false}) 
-   parentId: string; 
+   parentId?: string; 
    @Field(() => FolderType, {nullable: false}) 
    type: FolderType; 
    @Field(() => ID, {nullable: false}) 
-   fileId: string; 
+   fileId?: string; 
 }   
 
 

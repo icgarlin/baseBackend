@@ -42,22 +42,22 @@ export class DriveResolver {
  ): Promise<typeof FileOrFolderConnectionOrErrorUnion> {
      try {  
         const { user } = context; 
-        console.log('the user ', user)
+
         const { _id } = user; 
         const { parentId, deleted } = options; 
         console.log('our options ', options)
-        if (!parentId && !deleted) {
-          const res = await this.driveControl.getRootDriveData(_id,limit,cursor);
-          console.log('the res ', res);  
-          if (res instanceof Error) throw (res);
+        if (parentId === '' && !deleted) {
+          const res = await this.driveControl.getRootDriveData(_id,limit,cursor); 
+          console.log('our res ', res); 
+          if ('code' in res) throw (res);
           return res; 
         } else if (deleted) {
           const res = await this.driveControl.getDeletedDriveData(_id,limit,cursor); 
-          if (res instanceof Error) throw (res);
+          if ('code' in res) throw (res);
           return res; 
-        } else if (parentId) {
+        } else if (parentId !== '') {
           const res = await this.driveControl.getFolderChildren(_id,parentId,limit,cursor); 
-          if (res instanceof Error) throw (res); 
+          if ('code' in res) throw (res); 
           return res; 
         }
      } catch (error) {

@@ -210,8 +210,7 @@ findUser = async (userId: string): Promise<IUser | BasicError> => {
 }
 
 findUserByUsername = async (username: string): Promise<IUser | BasicError> => {
-   try {
-       console.log('the username ', username); 
+   try { 
        const resp = await UserModel.findOne({username}); 
        if (!resp) throw (new BasicError(ErrorCode.NotFound,`Could not find user`));
        const user = (resp.toObject() as unknown); 

@@ -45,7 +45,7 @@ export class FolderResolver {
                             name, 
                             isPersonal, 
                             type, 
-                            parentId: parentId !== '' ? parentId: null,
+                            parentId: parentId !== '' ? parentId: undefined,
                             fileId: fileId !== '' ? fileId : undefined,
                             starred: false, 
                             deleted: false, 
@@ -54,6 +54,7 @@ export class FolderResolver {
                                                               input
                                                              ); 
             if ('code' in res) throw (res);
+            console.log('our res ', res); 
             return {
                 ...res
             } as Folder
