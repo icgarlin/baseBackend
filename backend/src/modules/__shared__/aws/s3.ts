@@ -63,12 +63,7 @@ export class S3Repo extends FileHelper implements IBlobRepo {
         const hash = cryptoRandomString({length: 5});
         const ext = this.findExtension(ftype); 
         const mimeFolder = this.checkImageAudioVideo(ext); 
-        if (fname.indexOf(' ') >= 0) {
-           const name = this.removeSpacesFromName(fname);
-           return `users/${userId}/${mimeFolder}/${hash}-${name}`
-        } else {
-           return `users/${userId}/${mimeFolder}/${hash}-${fname}` 
-        }
+        return `users/${userId}/${mimeFolder}/${hash}-`
     }
 
     createServerFileKey = (serverId: string, fname: string, ftype: string): string => {

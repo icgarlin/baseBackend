@@ -7,7 +7,7 @@ import { FileUrlOrErrorUnion } from './types.resolver';
 import { BasicError, 
          ISuccess } from '../__shared__/error';
 import { TFile } from './file/file.schema';
-import { FolderType, IFolderModel } from './folder/folder.model';
+import { IFolderModel } from './folder/folder.model';
 import BaseRepo from '../__shared__/baseRepo';
 
 export interface IFileRepo extends BaseRepo { 

@@ -12,6 +12,8 @@ class FileHelper {
                 return 'image';
             case ext === '.jpeg':
                 return 'image';
+            case ext === '.heic' || ext === '.HEIC': 
+                return 'image'; 
             /* Audio */ 
             case ext === '.mp3':
                 return 'audio';
@@ -42,6 +44,9 @@ class FileHelper {
             return '.jpg';
         case url.includes('image/jpeg'): 
             return '.jpeg';
+
+        case url.includes('image/heic'): 
+            return '.heic'; 
         /* Audio */ 
         case url.includes('audio/mpeg'): 
             return '.mp3'; 
