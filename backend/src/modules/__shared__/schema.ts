@@ -129,3 +129,12 @@ export class SubscriptionInput {
   @Field(() => String)
   priceId: string; 
 }
+
+
+@InputType()
+export class ConnectionOptions {
+  @Field(() => Int, {nullable: false})
+  limit: number; 
+  @Field(() => String, {nullable: false})
+  cursor: string | null; 
+}

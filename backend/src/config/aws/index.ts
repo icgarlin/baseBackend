@@ -2,6 +2,9 @@ import AWS, { S3 } from 'aws-sdk';
 import * as dotenv from 'dotenv';
 dotenv.config(); 
 
+
+
+
 export const s3: S3 = new AWS.S3({ 
                                signatureVersion: 'v4',
                                region: process.env.AWS_BUCKET_REGION,

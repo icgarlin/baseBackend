@@ -1,10 +1,14 @@
-import { BasicError } from '../__shared__/error';
+import { BasicError,
+         ErrorCode } from '../__shared__/error';
+import { IConnectionOptions } from '../__shared__/interfaces';
 import { IFileRepo, 
          IFolderRepo, 
          IFileAndFolderList, 
          IFileOrFolderConnection, 
          IFolder,
-         IFile} from './interfaces';
+         IFile,
+         IDataOptions,
+         IDriveItemType} from './interfaces';
 
 
 
@@ -19,6 +23,29 @@ class DriveController {
   constructor (folderRepo: IFolderRepo, fileRepo: IFileRepo) {
     this.folderRepo = folderRepo; 
     this.fileRepo = fileRepo; 
+  }
+
+  getDriveData = async (dataOptions: IDataOptions): Promise<IFileOrFolderConnection | BasicError> => {
+    try { 
+      const { itemOptions, options } = dataOptions; 
+      const { userId, limit, cursor } = options; 
+      const { itemType, parentId, deleted } = itemOptions; 
+      if (parentId === '' && !deleted) {
+        const res = await this.getRootDriveData(options,itemType);
+        if ('code' in res) throw (res); 
+        return res;  
+      } else  if (deleted) {
+        const res = await this.getDeletedDriveData(userId,limit,cursor); 
+        if ('code' in res) throw (res); 
+        return res; 
+      } else { 
+        const res = await this.getFolderChildren(userId,parentId,limit,cursor); 
+        if ('code' in res) throw (res); 
+        return res; 
+      }
+    } catch (error) {
+        return error as BasicError; 
+    }
   }
 
   getFolderChildren = async (userId: string, parentId: string, limit: number, cursor: string | null): Promise<IFileOrFolderConnection | BasicError>  => {
@@ -45,24 +72,61 @@ class DriveController {
     }
   }
 
-  getRootDriveData = async (userId: string, limit: number, cursor: string | null): Promise<IFileOrFolderConnection | BasicError> => {
-    try {
-      const rootFiles = await this.fileRepo.getRootFiles(userId,limit,cursor); 
-      if ('code' in rootFiles) throw (rootFiles); 
-      const rootFolders = await this.folderRepo.getRootFoldersByCreated(userId,limit,cursor); 
-      if ('code' in rootFolders) throw (rootFolders); 
-      const res = [...rootFiles, ...rootFolders]; 
-      const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as [IFile | IFolder];
-      const hasNextPage = fileOrFolder.length > (limit * 2);
-      const edges = hasNextPage ? fileOrFolder.slice(0, -1) as [IFile | IFolder] : fileOrFolder;
-      return {
-        edges,
-        pageInfo: {
-          hasNextPage,
-          endCursor: this.fileRepo.toCursorHash(
-              edges[edges.length-1]?.createdAt.toString(),
-          ),
+  getRootDriveData = async (options: IConnectionOptions,itemType: IDriveItemType): Promise<IFileOrFolderConnection | BasicError> => {
+    try { 
+
+      const { userId, limit, cursor } = options; 
+      const  { files, folders } = itemType; 
+      if (files && folders) {
+        const rootFiles = await this.fileRepo.getRootFiles(userId,limit,cursor); 
+        if ('code' in rootFiles) throw (rootFiles); 
+        const rootFolders = await this.folderRepo.getRootFoldersByCreated(userId,limit,cursor); 
+        if ('code' in rootFolders) throw (rootFolders); 
+        const res = [...rootFiles, ...rootFolders]; 
+        const fileOrFolder = res.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as [IFile | IFolder];
+        const hasNextPage = fileOrFolder.length > (limit * 2);
+        const edges = hasNextPage ? fileOrFolder.slice(0, -1) as [IFile | IFolder] : fileOrFolder;
+        return {
+          edges,
+          pageInfo: {
+            hasNextPage,
+            endCursor: this.fileRepo.toCursorHash(
+                edges[edges.length-1]?.createdAt.toString(),
+            ),
+          }
         }
+      } else if (files && !folders) {
+        const rootFiles = await this.fileRepo.getRootFiles(userId,limit,cursor); 
+        if ('code' in rootFiles) throw (rootFiles);  
+        const hasNextPage = rootFiles.length > limit;
+        const edges = hasNextPage ? rootFiles.slice(0, -1) : rootFiles;
+
+        return {
+          edges: edges as [IFile],
+          pageInfo: {
+            hasNextPage,
+            endCursor: this.fileRepo.toCursorHash(
+                edges[edges.length-1]?.createdAt.toString(),
+            ),
+          }
+        } 
+      } else if (!files && folders) {
+        const rootFolders = await this.folderRepo.getRootFoldersByCreated(userId,limit,cursor); 
+        if ('code' in rootFolders) throw (rootFolders); 
+        const hasNextPage = rootFolders.length > limit;
+        const edges = hasNextPage ? rootFolders.slice(0, -1) : rootFolders;
+
+        return {
+          edges: edges as [IFolder],
+          pageInfo: {
+            hasNextPage,
+            endCursor: this.fileRepo.toCursorHash(
+                edges[edges.length-1]?.createdAt.toString(),
+            ),
+          }
+        }  
+      } else {
+        throw new BasicError(ErrorCode.BadRequest,`Incorrect input`); 
       }
     } catch (error) {
         return error as BasicError; 

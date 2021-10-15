@@ -8,7 +8,7 @@ import { Arg,
 import { Context } from '../__shared__/interfaces';
 import { Folder } from './folder/folder.schema';
 import { FileOrFolderConnectionOrErrorUnion } from './types.resolver';
-import { GenericError } from '../__shared__/schema';
+import { ConnectionOptions, GenericError } from '../__shared__/schema';
 import MongoDBFileRepo from './file/fileRepo.mongo';
 import MongoDBFolderRepo from './folder/folderRepo.mongo';
 import { CloudFrontRepo } from '../__shared__/aws/cloudfront';
@@ -16,6 +16,7 @@ import { S3Repo } from '../__shared__/aws/s3';
 import { Service } from 'typedi';
 import DriveController from './controller';
 import { DriveOptions } from './schema';
+import { IDataOptions } from './interfaces';
 
 
 @Service()
@@ -35,36 +36,30 @@ export class DriveResolver {
  @Authorized()
  @Query(() => FileOrFolderConnectionOrErrorUnion)
  async getDriveData(
-    @Arg('limit', () => Int , {nullable: false}) limit: number,
-    @Arg('options', () => DriveOptions, {nullable: false}) options: DriveOptions,
+    @Arg('connectionOptions', () => ConnectionOptions, {nullable: false}) options: ConnectionOptions, 
+    @Arg('driveOptions', () => DriveOptions, {nullable: false}) driveOptions: DriveOptions,
     @Ctx() context: Context,
-    @Arg('cursor', () => String) cursor: string | null,
  ): Promise<typeof FileOrFolderConnectionOrErrorUnion> {
      try {  
         const { user } = context; 
 
         const { _id } = user; 
-        const { parentId, deleted } = options; 
-        console.log('our options ', options)
-        if (parentId === '' && !deleted) {
-          const res = await this.driveControl.getRootDriveData(_id,limit,cursor); 
-          console.log('our res ', res); 
-          if ('code' in res) throw (res);
-          return res; 
-        } else if (deleted) {
-          const res = await this.driveControl.getDeletedDriveData(_id,limit,cursor); 
-          if ('code' in res) throw (res);
-          return res; 
-        } else if (parentId !== '') {
-          const res = await this.driveControl.getFolderChildren(_id,parentId,limit,cursor); 
-          if ('code' in res) throw (res); 
-          return res; 
-        }
+
+        const dataOptions: IDataOptions = { 
+            itemOptions: driveOptions,
+            options: {...options, userId: _id }
+        }; 
+        
+        const res = await this.driveControl.getDriveData(dataOptions); 
+        if ('code' in res) throw (res); 
+        return res; 
      } catch (error) {
-         // console.log( 'the err ', error); 
          return error as GenericError; 
      }
  }
 
 
 }
+
+
+

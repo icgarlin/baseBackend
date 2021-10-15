@@ -90,3 +90,8 @@ export interface IServerInviteCode {
   expiration: Date; 
 }
 
+export interface IConnectionOptions { 
+  userId: string; 
+  limit: number; 
+  cursor: string | null; 
+}

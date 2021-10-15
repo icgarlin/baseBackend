@@ -2,7 +2,8 @@ import { Document } from 'mongoose';
 import { ICloudServiceRepo, 
          IBlobRepo, 
          IPageInfo, 
-         UpdatedDocument } from '../__shared__/interfaces';
+         UpdatedDocument, 
+         IConnectionOptions} from '../__shared__/interfaces';
 import { FileUrlOrErrorUnion } from './types.resolver';
 import { BasicError, 
          ISuccess } from '../__shared__/error';
@@ -156,15 +157,27 @@ export interface IFolderOptionsInput {
    recents?: boolean; 
 }
 
-
-
 export interface IFileAndFolderList { 
    items: [IFile | IFolder];  
- }
-
+}
 
 export interface IFileOrFolderConnection {
    edges: [(IFile | IFolder)]; 
    pageInfo: IPageInfo; 
- }
- 
+}
+
+export interface IDriveOptions {
+    parentId: string; 
+    deleted: boolean;
+    itemType: IDriveItemType; 
+}
+
+export interface IDriveItemType {
+   files: boolean; 
+   folders: boolean; 
+}
+
+export interface IDataOptions {
+   itemOptions: IDriveOptions; 
+   options: IConnectionOptions; 
+}  

@@ -1,10 +1,7 @@
 import { Field, 
-    ObjectType,
-    InputType, 
-    createUnionType} from 'type-graphql';
+         ObjectType,
+         InputType } from 'type-graphql';
 import { PageInfo } from '../__shared__/schema';
-import { TFile } from './file/file.schema';
-import { Folder } from './folder/folder.schema';
 import { FileOrFolderUnion } from './types.resolver';
 
 
@@ -23,7 +20,17 @@ export class DriveOptions {
 parentId: string; 
 @Field(() => Boolean, {nullable: false})
 deleted: boolean; 
+@Field(() => Boolean, {nullable: false})
+itemType: DriveItemType; 
 }
+
+@InputType()
+export class DriveItemType {
+    @Field(() => Boolean, {nullable: false})
+    files: boolean; 
+    @Field(() => Boolean, {nullable: false})
+    folders: boolean; 
+}   
 
 @ObjectType()
 export class FileAndFolderList {
