@@ -6,7 +6,7 @@ import { Field,
          ID, 
          Root } from 'type-graphql';
 import { FileUrlOrErrorUnion } from '../../__shared__/types.resolver';
-import { ICloudServiceRepo } from '../../__shared__/interfaces';
+import { IBlobRepo, ICloudServiceRepo } from '../../__shared__/interfaces';
 import FileHelper from '../../__shared__/file.helper';
 import { BasicError, ErrorCode } from '../../__shared__/error';
 
@@ -15,7 +15,7 @@ import { BasicError, ErrorCode } from '../../__shared__/error';
 
 @ObjectType()
 export class TFile {
-    constructor(public cloudService?: ICloudServiceRepo, public fileHelp?: FileHelper) {}
+    constructor(public cloudService?: ICloudServiceRepo, public blobRepo?: IBlobRepo) {}
     @Field(() => ID, {nullable: false})
     _id: string; 
     @Field(() => String,{nullable: false})
@@ -39,18 +39,25 @@ export class TFile {
     @Field({nullable: false})
     createdAt: Date;
     @Field(() => FileUrlOrErrorUnion, {nullable: false})
-    fileUrl(
+    async fileUrl(
     @Root() file: TFile
-    ): typeof FileUrlOrErrorUnion {
+    ): Promise<typeof FileUrlOrErrorUnion> {
         try {
             const { key, name, type } = file;
-            if (this.fileHelp !== undefined) {
-              const createdKey = `${key}-${name}`; 
-              console.log('the created Key ', createdKey); 
-              const url = this.cloudService.getUrl(createdKey); 
-              return {url}
-            } else throw (new BasicError(ErrorCode.InternalServerError,`Could not get url`))
-        
+
+            if (process.env.NODE_ENV === 'production') {
+              if (this.cloudService !== undefined) {
+                const url = this.cloudService.getUrl(key); 
+                return {url}
+              } else throw (new BasicError(ErrorCode.InternalServerError,`Could not get url`));
+            } else {
+                if (this.blobRepo !== undefined) {
+                  const url = await this.blobRepo.getFile(process.env.AWS_BUCKET_NAME,key,3000,type)
+                  if (url instanceof BasicError) throw (url); 
+                  return {url};  
+                } else throw (new BasicError(ErrorCode.InternalServerError,`Could not get url`));
+            }
+          
         } catch (error) {
             if ('message' in error) {
               return error as GenericError; 

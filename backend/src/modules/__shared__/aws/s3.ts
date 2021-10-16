@@ -11,13 +11,22 @@ import cryptoRandomString from 'crypto-random-string';
 export class S3Repo extends FileHelper implements IBlobRepo {
 
 
-    downloadFile = async (key: string, bucket: string): Promise<ISuccess | BasicError> => {
+    getFile = async (bucketName: string, key: string, expires: number, type: string): Promise<string | BasicError> => {
         try {
-          const { Body } = await s3.getObject({Key: key, Bucket: bucket}).promise(); 
-          // await fsp.writeFile(``, Body); 
-          return {success:true}; 
+            const url = await s3.getSignedUrlPromise('getObject', {
+                Bucket: bucketName,
+                Key: key,
+                Expires: expires,
+                ContentType: type,
+                // ACL: acl
+            });  
+            return url; 
         } catch (error) {
-            return error as BasicError; 
+            if ('code' in error) {
+                const err = (error as AWSError)
+                return new BasicError(parseInt(err.code),err.message); 
+            } 
+          
         }
     }
 
@@ -43,7 +52,7 @@ export class S3Repo extends FileHelper implements IBlobRepo {
                 Key: key,
                 Expires: expires,
                 ContentType: type,
-                ACL: acl
+                // ACL: acl
             });  
             return url; 
         } catch (error) {
@@ -102,7 +111,7 @@ export class S3Repo extends FileHelper implements IBlobRepo {
 
     handleGetPreSignedUrl = async (fName: string, fType: string, userId: string, serverId?: string): Promise<{url: string, key: string} | BasicError> => {
         try { 
-        const signedUrlExpireSeconds = 60 * 5;
+        const signedUrlExpireSeconds = 3000;
         if (serverId !== undefined) { 
             const key = this.createServerFileKey(userId,fName,fType);
             const url = await this.getS3SignedUrl(process.env.AWS_BUCKET_NAME,key,signedUrlExpireSeconds,fType,'public-read'); 

@@ -135,6 +135,6 @@ export class SubscriptionInput {
 export class ConnectionOptions {
   @Field(() => Int, {nullable: false})
   limit: number; 
-  @Field(() => String, {nullable: false})
+  @Field(() => String)
   cursor: string | null; 
 }

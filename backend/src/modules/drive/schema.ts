@@ -8,20 +8,20 @@ import { FileOrFolderUnion } from './types.resolver';
 
 @ObjectType()
 export class FileOrFolderConnection {
-@Field(() => [FileOrFolderUnion], {nullable: false})
-edges: [(typeof FileOrFolderUnion)]; 
-@Field(() => PageInfo, {nullable: false})
-pageInfo: PageInfo; 
+    @Field(() => [FileOrFolderUnion], {nullable: false})
+    edges: [(typeof FileOrFolderUnion)]; 
+    @Field(() => PageInfo, {nullable: false})
+    pageInfo: PageInfo; 
 }
 
 @InputType()
 export class DriveOptions { 
-@Field(() => String, {nullable: false})  
-parentId: string; 
-@Field(() => Boolean, {nullable: false})
-deleted: boolean; 
-@Field(() => Boolean, {nullable: false})
-itemType: DriveItemType; 
+    @Field(() => String, {nullable: false})  
+    parentId: string; 
+    @Field(() => Boolean, {nullable: false})
+    deleted: boolean; 
+    @Field(() => DriveItemType, {nullable: false})
+    itemType: DriveItemType; 
 }
 
 @InputType()
@@ -34,6 +34,6 @@ export class DriveItemType {
 
 @ObjectType()
 export class FileAndFolderList {
-@Field(() => [FileOrFolderUnion], {nullable: false})
-items: [typeof FileOrFolderUnion]; 
+    @Field(() => [FileOrFolderUnion], {nullable: false})
+    items: [typeof FileOrFolderUnion]; 
 }
