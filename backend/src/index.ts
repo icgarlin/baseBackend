@@ -38,11 +38,11 @@ apolloGate.then((gateway) => {
     });
     gateway.installSubscriptionHandlers(hS); 
 
-    const pubClient = createClient({ host: 'localhost', port: 6379 });
-    const subClient = pubClient.duplicate();
+    // const pubClient = createClient({ host: 'localhost', port: 6379 });
+    // const subClient = pubClient.duplicate();
 
     const io = new Server(hS, {transports: ['polling']});
-    io.adapter(createAdapter(pubClient, subClient)); 
+    // io.adapter(createAdapter(pubClient, subClient)); 
     buildSocket(io,serverControl,dmControl); 
 }).catch((error) => {
     console.log('Our error building server ', error);
