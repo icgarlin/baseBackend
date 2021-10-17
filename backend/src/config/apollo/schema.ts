@@ -18,7 +18,7 @@ interface TypeGraphQLSchemaBuilderConfig {
   nullableByDefault: boolean; 
   container?: ContainerType | ContainerGetter<any>; 
   validate: boolean;
-  pubSub: PubSubEngine | PubSubOptions;  
+  pubSub?: PubSubEngine | PubSubOptions;  
   authChecker: AuthChecker<any, any>; 
 }
 

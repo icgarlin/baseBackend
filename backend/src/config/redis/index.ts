@@ -10,8 +10,8 @@ const options = {
   }
 };
 
-export const pubSub = new RedisPubSub({
-  publisher: new Redis(REDIS_URL, options),
-  subscriber: new Redis(REDIS_URL, options)
-});
+// export const pubSub = new RedisPubSub({
+//   publisher: new Redis(REDIS_URL, options),
+//   subscriber: new Redis(REDIS_URL, options)
+// });
   

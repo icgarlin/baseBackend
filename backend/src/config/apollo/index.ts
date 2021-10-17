@@ -11,7 +11,7 @@ import TApolloServer from './server';
 import SchemaBuilder from './schema';
 import Container from 'typedi';
 import app from '../../app';
-import { pubSub } from '../redis';
+// import { pubSub } from '../redis';
 import { authChecker } from '../auth';
 
 
@@ -30,7 +30,7 @@ export const buildApolloServerGateway = async (): Promise<ApolloServer | BasicEr
                                               container: Container,
                                               nullableByDefault: true,
                                               validate: false,
-                                              pubSub: pubSub,
+                                              // pubSub: pubSub,
                                               authChecker: authChecker
                                               
                                             })
