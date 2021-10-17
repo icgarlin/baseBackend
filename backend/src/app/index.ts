@@ -12,7 +12,7 @@ const app = express();
 
 
 const corsOptions = {
-   origin: (process.env.NODE_ENV === 'production') ? 'https://www.rainbase.io/' : '*',
+   origin: (process.env.NODE_ENV === 'production') ? 'https://www.rainbase.io' : '*',
    credentials: false
 }
 
