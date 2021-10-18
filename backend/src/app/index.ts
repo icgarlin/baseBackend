@@ -28,6 +28,9 @@ app.use(cors(corsOptions));
 if (process.env.NODE_ENV === 'production') {
   app.use(sslRedirect());
   app.use(express.static(path.join(__dirname, '../../../frontend/build/')));
+  app.get('/', (req: Request, res: Response) => {
+    res.send('Hello World')
+  }); 
   app.get('/*', function response(req: Request, res: Response) {
     if ('https' !== req.headers['x-forwarded-proto']) {
       res.redirect('https://' + req.hostname + req.url);
