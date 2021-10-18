@@ -27,9 +27,10 @@ app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === 'production') {
   app.use(sslRedirect());
-  app.use(express.static(path.join(__dirname, '../../../frontend/build/')));
+  // app.use(express.static(path.join(__dirname, '../../../frontend/build/')));
+  app.set('views', path.join(__dirname, '/views/'));
   app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World')
+    res.render('404.ejs')
   }); 
   app.get('/*', function response(req: Request, res: Response) {
     if ('https' !== req.headers['x-forwarded-proto']) {
